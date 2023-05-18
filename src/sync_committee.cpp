@@ -1,3 +1,5 @@
+#include <array>
+
 #include <nil/crypto3/pubkey/algorithm/sign.hpp>
 #include <nil/crypto3/pubkey/algorithm/verify.hpp>
 #include <nil/crypto3/pubkey/algorithm/aggregate.hpp>
@@ -19,17 +21,13 @@ include "./sha256.circom";
  */
 
 template<std::size_t SYNC_COMMITTEE_SIZE, std::size_t LOG_2_SYNC_COMMITTEE_SIZE, std::size_t N, std::size_t K>
-std::size_t participation VerifySyncCommitteeSignature(
+std::size_t VerifySyncCommitteeSignature(
     const std::array<std::array<std::array<std::size_t, SYNC_COMITTEE_SIZE>, 2>, K> &pubkeys,
     const std::array<std::size_t, SYNC_COMMITTEE_SIZE> &aggregation_bits,
-    const std::array<std::array<std::array<typename pubkey::public_key<bls12<381>>::signature_type, 2>, 2>, K>
-        &signature) {
-    signal input pubkeys[SYNC_COMMITTEE_SIZE][2][K];
-    signal input aggregationBits[SYNC_COMMITTEE_SIZE];
-    signal input signature[2][2][K];
-    signal input signingRoot[32];
-    signal input syncCommitteeRoot;
-    signal output participation;
+    const std::array<
+        std::array<std::array<typename nil::crypto3::pubkey::public_key<bls12<381>>::signature_type, 2>, 2>, K>
+        &signature,
+    const std::array<std::size_t, 32> &signingRoot, std::size_t syncCommitteeRoot) {
 
     /* RANGE CHECK AGGREGATION BITS */
     for (var i = 0; i < SYNC_COMMITTEE_SIZE; i++) {

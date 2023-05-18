@@ -1,16 +1,12 @@
-pragma circom 2.0.3;
-
-include "../../node_modules/circomlib/circuits/poseidon.circom";
+#include <array>
 
 /*
  * Helper functions for computing Poseidon commitments to the sync committee's
  * validator public keys.
  */
 
-template PoseidonG1Array(LENGTH, N, K) {
-    signal input pubkeys[LENGTH][2][K];
-    signal output out;
-
+template<std::size_t LENGTH, std::size_t N, std::size_t K>
+std::size_t PoseidonG1Array(const std::array<std::array<std::array<std::size_t, K>, 2>, LENGTH> &pubkeys) {
     component hasher = PoseidonSponge(LENGTH * 2 * K);
     for (var i = 0; i < LENGTH; i++) {
         for (var j = 0; j < K; j++) {
@@ -22,10 +18,9 @@ template PoseidonG1Array(LENGTH, N, K) {
     out <= = hasher.out;
 }
 
-template PoseidonSponge(LENGTH) {
-    assert(LENGTH % 16 == 0);
-    signal input in[LENGTH];
-    signal output out;
+template<std::size_t LENGTH>
+std::size_t PoseidonSponge(const std::array<std::size_t, LENGTH> &in) {
+    static_assert(LENGTH % 16 == 0);
 
     var POSEIDON_SIZE = 16;
     var NUM_ROUNDS = LENGTH \ POSEIDON_SIZE;

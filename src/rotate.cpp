@@ -1,10 +1,9 @@
 #include <ethereum/sync_committee/constants.hpp>
-
-include "./inputs.cpp";
-include "./bls.cpp";
-include "./poseidon.circom";
-include "./ssz.cpp";
-include "./sync_committee.cpp";
+#include <ethereum/sync_committee/inputs.hpp>
+#include <ethereum/sync_committee/bls.hpp>
+#include <ethereum/sync_committee/poseidon.hpp>
+#include <ethereum/sync_committee/ssz.hpp>
+#include <ethereum/sync_committee/sync_committee.hpp>
 
 /*
  * Maps the SSZ commitment of the sync committee's pubkeys to a SNARK friendly

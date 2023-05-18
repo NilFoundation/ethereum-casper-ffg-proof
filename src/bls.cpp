@@ -1,7 +1,9 @@
-include "./pairing/bls_signature.cpp";
-include "./pairing/curve.cpp";
-include "./pairing/bls12_381_func.cpp";
-include "./sha256.cpp";
+#include <ethereum/sync_committee/constants.hpp>
+#include <ethereum/sync_committee/inputs.hpp>
+#include <ethereum/sync_committee/bls.hpp>
+#include <ethereum/sync_committee/poseidon.hpp>
+#include <ethereum/sync_committee/ssz.hpp>
+#include <ethereum/sync_committee/sync_committee.hpp>
 
 /*
  * This file efficiently implements BLS12-381 public key aggregation. It takes

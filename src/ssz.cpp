@@ -28,11 +28,9 @@ std::array<std::size_t, NumBytes / 2> SSZLayer(const std::array<std::size_t, Num
     }
 }
 
-template SSZArray(numBytes, log2b) {
+template<std::size_t numBytes, std::size_t log2b>
+std::array<std::size_t, 32> SSZArray(const std::array<std::size_t, numBytes> &in) {
     assert(32 * (2 * *log2b) == numBytes);
-
-    signal input in[numBytes];
-    signal output out[32];
 
     component sszLayers[log2b];
     for (var layerIdx = 0; layerIdx < log2b; layerIdx++) {
@@ -53,10 +51,10 @@ template SSZArray(numBytes, log2b) {
     }
 }
 
-template SSZPhase0SyncCommittee(SYNC_COMMITTEE_SIZE, LOG_2_SYNC_COMMITTEE_SIZE, G1_POINT_SIZE) {
-    signal input pubkeys[SYNC_COMMITTEE_SIZE][G1_POINT_SIZE];
-    signal input aggregatePubkey[G1_POINT_SIZE];
-    signal output out[32];
+template<std::size_t SYNC_COMMITTEE_SIZE, std::size_t LOG_2_SYNC_COMMITTEE_SIZE, std::size_t G1_POINT_SIZE>
+std::array<std::size_t, 32>
+    SSZPhase0SyncCommittee(const std::array<std::array<std::size_t, SYNC_COMMITTEE_SIZE>, G1_POINT_SIZE> &pubkeys,
+                           const std::array<std::size_t, G1_POINT_SIZE> &aggregatePubkey) {
 
     component sszPubkeys = SSZArray(SYNC_COMMITTEE_SIZE * 64, LOG_2_SYNC_COMMITTEE_SIZE + 1);
     for (var i = 0; i < SYNC_COMMITTEE_SIZE; i++) {
@@ -92,14 +90,11 @@ template SSZPhase0SyncCommittee(SYNC_COMMITTEE_SIZE, LOG_2_SYNC_COMMITTEE_SIZE, 
     }
 }
 
-template SSZPhase0BeaconBlockHeader() {
-    signal input slot[32];
-    signal input proposerIndex[32];
-    signal input parentRoot[32];
-    signal input stateRoot[32];
-    signal input bodyRoot[32];
-    signal output out[32];
-
+std::array<std::size_t, 32> SSZPhase0BeaconBlockHeader(const std::array<std::size_t, 32> &slot,
+                                                       const std::array<std::size_t, 32> &proposerIndex,
+                                                       const std::array<std::size_t, 32> &parentRoot,
+                                                       const std::array<std::size_t, 32> &stateRoot,
+                                                       const std::array<std::size_t, 32> &bodyRoot) {
     component sszBeaconBlockHeader = SSZArray(256, 3);
     for (var i = 0; i < 256; i++) {
         if (i < 32) {
@@ -122,11 +117,8 @@ template SSZPhase0BeaconBlockHeader() {
     }
 }
 
-template SSZPhase0SigningRoot() {
-    signal input headerRoot[32];
-    signal input domain[32];
-    signal output out[32];
-
+std::array<std::size_t, 32> SSZPhase0SigningRoot(const std::array<std::size_t, 32> &headerRoot,
+                                                 const std::array<std::size_t, 32> &domain) {
     component sha256 = Sha256Bytes(64);
     for (var i = 0; i < 32; i++) {
         sha256.in[i] <= = headerRoot[i];
@@ -141,11 +133,9 @@ template SSZPhase0SigningRoot() {
     }
 }
 
-template SSZRestoreMerkleRoot(depth, index) {
-    signal input leaf[32];
-    signal input branch[depth][32];
-    signal output out[32];
-
+template<std::size_t depth, std::size_t index>
+std::array<std::size_t, 32> SSZRestoreMerkleRoot(const std::array<std::size_t, 32> &leaf,
+                                                 const std::array<std::array<std::size_t, depth>, 32> &branch) {
     component hasher[depth];
 
     var firstOffset;
