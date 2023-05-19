@@ -1,3 +1,5 @@
+#include <array>
+
 #include <ethereum/sync_committee/constants.hpp>
 #include <ethereum/sync_committee/inputs.hpp>
 #include <ethereum/sync_committee/bls.hpp>
@@ -33,10 +35,20 @@
  * @input  executionStateBranch   A Merkle proof for executionStateRoot
  * @input  publicInputsRoot       A commitment to all "public inputs"
  */
-void Step(const std::array<std::size_t, 32> &attestedHeaderRoot, const std::array<std::size_t, 32> &attestedSlot,
+void Step(const std::array<std::size_t, 32> &attestedHeaderRoot,
+          const std::array<std::size_t, 32> &attestedSlot,
           const std::array<std::size_t, 32> &attestedProposerIndex,
-          const std::array<std::size_t, 32> &attestedParentRoot, const std::array<std::size_t, 32> &attestedStateRoot,
-          const std::array<std::size_t, 32> &attestedBodyRoot) {
+          const std::array<std::size_t, 32> &attestedParentRoot,
+          const std::array<std::size_t, 32> &attestedStateRoot,
+          const std::array<std::size_t, 32> &attestedBodyRoot,
+
+          const std::array<std::size_t, 32> &finalizedHeaderRoot,
+          const std::array<std::size_t, 32> &finalizedSlot,
+          const std::array<std::size_t, 32> &finalizedProposerIndex,
+          const std::array<std::size_t, 32> &finalizedParentRoot,
+          const std::array<std::size_t, 32> &finalizedStateRoot,
+          const std::array<std::size_t, 32> &finalizedBodyRoot) {
+
     std::size_t N = getNumBitsPerRegister();
     std::size_t K = getNumRegisters();
     std::size_t SYNC_COMMITTEE_SIZE = getSyncCommitteeSize();
@@ -46,22 +58,6 @@ void Step(const std::array<std::size_t, 32> &attestedHeaderRoot, const std::arra
     std::size_t EXECUTION_STATE_ROOT_DEPTH = getExecutionStateRootDepth();
     std::size_t EXECUTION_STATE_ROOT_INDEX = getExecutionStateRootIndex();
     std::size_t TRUNCATED_SHA256_SIZE = getTruncatedSha256Size();
-
-    /* Attested Header */
-    signal input attestedHeaderRoot[32];
-    signal input attestedSlot[32];
-    signal input attestedProposerIndex[32];
-    signal input attestedParentRoot[32];
-    signal input attestedStateRoot[32];
-    signal input attestedBodyRoot[32];
-
-    /* Finalized Header */
-    signal input finalizedHeaderRoot[32];
-    signal input finalizedSlot[32];
-    signal input finalizedProposerIndex[32];
-    signal input finalizedParentRoot[32];
-    signal input finalizedStateRoot[32];
-    signal input finalizedBodyRoot[32];
 
     /* Sync Committee Protocol */
     signal input pubkeysX[SYNC_COMMITTEE_SIZE][K];

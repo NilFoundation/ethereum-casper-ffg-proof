@@ -8,12 +8,6 @@
 
 #include <nil/crypto3/pubkey/bls.hpp>
 
-include "./pairing/bls_signature.cpp";
-include "./pairing/curve.cpp";
-include "./pairing/bls12_381_func.cpp";
-include "./hash_to_field.circom";
-include "./sha256.circom";
-
 /*
  * Implements all logic regarding verifying the sync committee validator set
  * and signature verification. This template is quite expensive and takes
@@ -22,7 +16,7 @@ include "./sha256.circom";
 
 template<std::size_t SYNC_COMMITTEE_SIZE, std::size_t LOG_2_SYNC_COMMITTEE_SIZE, std::size_t N, std::size_t K>
 std::size_t VerifySyncCommitteeSignature(
-    const std::array<std::array<std::array<std::size_t, SYNC_COMITTEE_SIZE>, 2>, K> &pubkeys,
+    const std::array<std::array<std::array<std::size_t, SYNC_COMMITTEE_SIZE>, 2>, K> &pubkeys,
     const std::array<std::size_t, SYNC_COMMITTEE_SIZE> &aggregation_bits,
     const std::array<
         std::array<std::array<typename nil::crypto3::pubkey::public_key<bls12<381>>::signature_type, 2>, 2>, K>

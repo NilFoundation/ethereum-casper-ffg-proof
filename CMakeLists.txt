@@ -30,7 +30,7 @@ cm_setup_version(VERSION 0.1.0 PREFIX ${CMAKE_WORKSPACE_NAME}_${CMAKE_PROJECT_NA
 
 add_library(${CMAKE_WORKSPACE_NAME}_${CMAKE_PROJECT_NAME} OBJECT
             include/ethereum/sync_committee/constants.hpp
-            src/hash_to_field.cpp
+            include/ethereum/sync_committee/hash_to_field.hpp
             src/inputs.cpp
             src/poseidon.cpp
             src/ssz.cpp

@@ -9,9 +9,7 @@
  */
 
 template<std::size_t MSG_LEN>
-std::array<std::array<std::array<std::size_t, 7>, M>, COUNT> HashToField() {
-    signal input msg[MSG_LEN];
-
+std::array<std::array<std::array<std::size_t, 7>, M>, COUNT> HashToField(const std::array<std::size_t, MSG_LEN> &msg) {
     var DST[43] = getDomainSeperatorTag();
     var P[7] = getBLS128381Prime();
     var DST_LEN = 43;
