@@ -10,23 +10,30 @@
  */
 
 template<std::size_t NumBytes, std::size_t NumPairs = NumBytes / 64>
-std::array<std::size_t, NumBytes / 2> SSZLayer(const std::array<std::size_t, NumBytes> &in) {
-    static_assert(NumBytes >= 64);
+struct SSZLayer {
+    const std::array<std::size_t, NumBytes> &in;
 
-    std::array<typename hashes::sha2<256>::hash_type, NumPairs> hashers;
-
-    for (int i = 0; i < NumPairs; i++) {
-        for (int j = 0; j < 64; j++) {
-            hashers[i].in[j] <= = in[i * 64 + j];
-        }
+    SSZLayer(const std::array<std::size_t, NumBytes> &i) : in(i) {
     }
 
-    for (int i = 0; i < NumPairs; i++) {
-        for (int j = 0; j < 32; j++) {
-            out[i * 32 + j] <= = hashers[i].out[j];
+    std::array<std::size_t, NumBytes / 2> operator()() {
+        static_assert(NumBytes >= 64);
+
+        std::array<typename nil::crypto3::hashes::sha2<256>::hash_type, NumPairs> hashers;
+
+        for (int i = 0; i < NumPairs; i++) {
+            for (int j = 0; j < 64; j++) {
+                hashers[i].in[j] <= = in[i * 64 + j];
+            }
+        }
+
+        for (int i = 0; i < NumPairs; i++) {
+            for (int j = 0; j < 32; j++) {
+                out[i * 32 + j] <= = hashers[i].out[j];
+            }
         }
     }
-}
+};
 
 template<std::size_t numBytes, std::size_t log2b>
 std::array<std::size_t, 32> SSZArray(const std::array<std::size_t, numBytes> &in) {
@@ -34,7 +41,7 @@ std::array<std::size_t, 32> SSZArray(const std::array<std::size_t, numBytes> &in
 
     component sszLayers[log2b];
     for (var layerIdx = 0; layerIdx < log2b; layerIdx++) {
-        var numInputBytes = numBytes \ (2 * *layerIdx);
+        std::size_t numInputBytes = numBytes / (2 * *layerIdx);
         sszLayers[layerIdx] = SSZLayer(numInputBytes);
 
         for (var i = 0; i < numInputBytes; i++) {
