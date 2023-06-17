@@ -127,13 +127,13 @@ template LineFunctionUnequal(n, k, q) {
     var LOGK2 = log_ceil(3*k*k);
 
     component nocarry = SignedLineFunctionUnequalNoCarry(n, k, 2 * n + LOGK1);
-    for (var i = 0; i < 2; i++)for(var j = 0; j < 2; j++) {
+    for (int i = 0; i < 2; i++)for(var j = 0; j < 2; j++) {
 	    for (var idx = 0; idx < k; idx++) {
             nocarry.P[i][j][idx] <== P[i][j][idx];
 	    }
     }
 
-    for (var i = 0; i < 2; i++)for(var j = 0; j < 6; j++) {
+    for (int i = 0; i < 2; i++)for(var j = 0; j < 6; j++) {
 	    for (var l = 0; l < 2; l++) {
 		for (var idx = 0; idx < k; idx++) {
 		    nocarry.Q[i][j][l][idx] <== Q[i][j][l][idx];
@@ -141,7 +141,7 @@ template LineFunctionUnequal(n, k, q) {
 	    }
     }
     component reduce[6][2];
-    for (var i = 0; i < 6; i++) {
+    for (int i = 0; i < 6; i++) {
         for (var j = 0; j < 2; j++) {
             reduce[i][j] = PrimeReduce(n, k, k - 1, q, 3 * n + LOGK2);
         }
@@ -155,7 +155,7 @@ template LineFunctionUnequal(n, k, q) {
 
     // max overflow register size is 3 * k^2 * 2^{3n}
     component carry = SignedFp12CarryModP(n, k, 3 * n + LOGK2, q);
-    for (var i = 0; i < 6; i++) {
+    for (int i = 0; i < 6; i++) {
         for (var j = 0; j < 2; j++) {
             for (var idx = 0; idx < k; idx++) {
                 carry.in[i][j][idx] <== reduce[i][j].out[idx];
@@ -163,7 +163,7 @@ template LineFunctionUnequal(n, k, q) {
         }
     }
     
-    for (var i = 0; i < 6; i++) {
+    for (int i = 0; i < 6; i++) {
         for (var j = 0; j < 2; j++) {
             for (var idx = 0; idx < k; idx++) {
             out[i][j][idx] <== carry.out[i][j][idx];
@@ -188,13 +188,13 @@ template LineFunctionEqual(n, k, q) {
 
     var LOGK2 = log_ceil((3*k+1)*k);
     component nocarry = SignedLineFunctionEqualNoCarry(n, k, 3*n + LOGK2);
-    for (var i = 0; i < 2; i++) {
+    for (int i = 0; i < 2; i++) {
         for (var idx = 0; idx < k; idx++) {
             nocarry.P[i][idx] <== P[i][idx];
         }
     }
 
-    for (var i = 0; i < 2; i++) {
+    for (int i = 0; i < 2; i++) {
         for (var j = 0; j < 6; j++) {
             for (var l = 0; l < 2; l++) {
                 for (var idx = 0; idx < k; idx++) {
@@ -206,7 +206,7 @@ template LineFunctionEqual(n, k, q) {
     
     var LOGK3 = log_ceil((2*k-1)*(3*k*k) + 1);
     component reduce[6][4]; 
-    for (var i = 0; i < 6; i++) {
+    for (int i = 0; i < 6; i++) {
         for (var j = 0; j < 2; j++) {
             reduce[i][j] = PrimeReduce(n, k, 2 * k - 2, q, 4 * n + LOGK3);
         }
@@ -220,7 +220,7 @@ template LineFunctionEqual(n, k, q) {
 
     // max overflow register size is (2k - 1) * (3k^2+1) * 2^{4n} assuming 2k<=2^n
     component carry = SignedFp12CarryModP(n, k, 4 * n + LOGK3, q);
-    for (var i = 0; i < 6; i++) {
+    for (int i = 0; i < 6; i++) {
         for (var j = 0; j < 2; j++) {
             for (var idx = 0; idx < k; idx++) {
                 carry.in[i][j][idx] <== reduce[i][j].out[idx];
@@ -228,7 +228,7 @@ template LineFunctionEqual(n, k, q) {
         }
     }
     
-    for (var i = 0; i < 6; i++) {
+    for (int i = 0; i < 6; i++) {
         for (var j = 0; j < 2; j++) {
             for (var idx = 0; idx < k; idx++) {
             out[i][j][idx] <== carry.out[i][j][idx];
@@ -317,7 +317,7 @@ template MillerLoop(n, k, b, x, q){
     var Bits[250]; // length is k * n
     var BitLength;
     var SigBits=0;
-    for (var i = 0; i < 250; i++) {
+    for (int i = 0; i < 250; i++) {
         Bits[i] = (x >> i) & 1;
         if(Bits[i] == 1){
             SigBits++;
@@ -642,7 +642,7 @@ template SignedLineFunctionEqualNoCarryFp2(n, k, m_out){
     }
 
     component x_cu3 = BigMultShortLong2DUnequal(n, 2*k-1, k, 2, 2);
-    for (var i = 0; i < 2*k-1; i ++) {
+    for (int i = 0; i < 2*k-1; i ++) {
         if (i < k) {
             x_cu3.b[0][i] <== P[0][0][i];
             x_cu3.b[1][i] <== P[0][1][i];
@@ -720,20 +720,20 @@ template LineFunctionUnequalFp2(n, k, q) {
     var LOGK2 = log_ceil(2*k*k);
 
     component nocarry = SignedLineFunctionUnequalNoCarryFp2(n, k, 2 * n + LOGK1);
-    for (var i = 0; i < 2; i++)for(var j = 0; j < 2; j++) {
+    for (int i = 0; i < 2; i++)for(var j = 0; j < 2; j++) {
 	    for (var idx = 0; idx < k; idx++) {
             nocarry.P[i][j][0][idx] <== P[i][j][0][idx];
             nocarry.P[i][j][1][idx] <== P[i][j][1][idx];
 	    }
     }
 
-    for (var i = 0; i < 2; i++) {
+    for (int i = 0; i < 2; i++) {
         for (var idx = 0; idx < k; idx++) {
             nocarry.Q[i][idx] <== Q[i][idx];
         }
     }
     component reduce[6][2];
-    for (var i = 0; i < 6; i++) {
+    for (int i = 0; i < 6; i++) {
         for (var j = 0; j < 2; j++) {
             reduce[i][j] = PrimeReduce(n, k, k - 1, q, 3 * n + LOGK2);
         }
@@ -747,7 +747,7 @@ template LineFunctionUnequalFp2(n, k, q) {
 
     // max overflow register size is 2k^2 * 2^{3n}
     component carry = SignedFp12CarryModP(n, k, 3 * n + LOGK2, q);
-    for (var i = 0; i < 6; i++) {
+    for (int i = 0; i < 6; i++) {
         for (var j = 0; j < 2; j++) {
             for (var idx = 0; idx < k; idx++) {
                 carry.in[i][j][idx] <== reduce[i][j].out[idx];
@@ -755,7 +755,7 @@ template LineFunctionUnequalFp2(n, k, q) {
         }
     }
     
-    for (var i = 0; i < 6; i++) {
+    for (int i = 0; i < 6; i++) {
         for (var j = 0; j < 2; j++) {
             for (var idx = 0; idx < k; idx++) {
             out[i][j][idx] <== carry.out[i][j][idx];
@@ -779,7 +779,7 @@ template LineFunctionEqualFp2(n, k, q) {
 
     var LOGK2 = log_ceil(12*k*k + 1);
     component nocarry = SignedLineFunctionEqualNoCarryFp2(n, k, 3*n + LOGK2);
-    for (var i = 0; i < 2; i++) {
+    for (int i = 0; i < 2; i++) {
         for (var j = 0; j < 2; j ++) {
             for (var idx = 0; idx < k; idx++) {
                 nocarry.P[i][j][idx] <== P[i][j][idx];
@@ -787,7 +787,7 @@ template LineFunctionEqualFp2(n, k, q) {
         }
     }
 
-    for (var i = 0; i < 2; i++) {
+    for (int i = 0; i < 2; i++) {
         for (var idx = 0; idx < k; idx++) {
             nocarry.Q[i][idx] <== Q[i][idx];
         }
@@ -795,7 +795,7 @@ template LineFunctionEqualFp2(n, k, q) {
     
     var LOGK3 = log_ceil((2*k-1)*12*k*k + 1);
     component reduce[6][4]; 
-    for (var i = 0; i < 6; i++) {
+    for (int i = 0; i < 6; i++) {
         for (var j = 0; j < 2; j++) {
             reduce[i][j] = PrimeReduce(n, k, 2 * k - 2, q, 4 * n + LOGK3);
         }
@@ -809,7 +809,7 @@ template LineFunctionEqualFp2(n, k, q) {
 
     // max overflow register size is (2k - 1) * 12k^2 * 2^{4n}
     component carry = SignedFp12CarryModP(n, k, 4 * n + LOGK3, q);
-    for (var i = 0; i < 6; i++) {
+    for (int i = 0; i < 6; i++) {
         for (var j = 0; j < 2; j++) {
             for (var idx = 0; idx < k; idx++) {
                 carry.in[i][j][idx] <== reduce[i][j].out[idx];
@@ -817,7 +817,7 @@ template LineFunctionEqualFp2(n, k, q) {
         }
     }
     
-    for (var i = 0; i < 6; i++) {
+    for (int i = 0; i < 6; i++) {
         for (var j = 0; j < 2; j++) {
             for (var idx = 0; idx < k; idx++) {
             out[i][j][idx] <== carry.out[i][j][idx];
@@ -905,7 +905,7 @@ template MillerLoopFp2(n, k, b, x, q){
     var Bits[250]; 
     var BitLength;
     var SigBits=0;
-    for (var i = 0; i < 250; i++) {
+    for (int i = 0; i < 250; i++) {
         Bits[i] = (x >> i) & 1;
         if(Bits[i] == 1){
             SigBits++;
@@ -1040,7 +1040,7 @@ template MillerLoopFp2Two(n, k, b, x, q){
     var Bits[250]; // length is k * n
     var BitLength;
     var SigBits=0;
-    for (var i = 0; i < 250; i++) {
+    for (int i = 0; i < 250; i++) {
         Bits[i] = (x >> i) & 1;
         if(Bits[i] == 1){
             SigBits++;

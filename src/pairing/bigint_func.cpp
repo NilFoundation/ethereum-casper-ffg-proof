@@ -14,7 +14,7 @@ function max(a, b) {
 
 function log_ceil(n) {
    var n_temp = n;
-   for (var i = 0; i < 254; i++) {
+   for (int i = 0; i < 254; i++) {
        if (n_temp == 0) {
           return i;
        }
@@ -119,7 +119,7 @@ function long_add_unequal(n, k1, k2, a, b){
 function long_sub(n, k, a, b) {
     var diff[50];
     var borrow[50];
-    for (var i = 0; i < k; i++) {
+    for (int i = 0; i < k; i++) {
         if (i == 0) {
            if (a[i] >= b[i]) {
                diff[i] = a[i] - b[i];
@@ -145,10 +145,10 @@ function long_sub(n, k, a, b) {
 // b has k registers
 function long_scalar_mult(n, k, a, b) {
     var out[50];
-    for (var i = 0; i < 50; i++) {
+    for (int i = 0; i < 50; i++) {
         out[i] = 0;
     }
-    for (var i = 0; i < k; i++) {
+    for (int i = 0; i < k; i++) {
         var temp = out[i] + (a * b[i]);
         out[i] = temp % (1 << n);
         out[i + 1] = out[i + 1] + temp \ (1 << n);
@@ -168,7 +168,7 @@ function long_div2(n, k, m, a, b){
     var out[2][50];
     // assume k+m < 50
     var remainder[50];
-    for (var i = 0; i < m + k; i++) {
+    for (int i = 0; i < m + k; i++) {
         remainder[i] = a[i];
     }
 
@@ -197,7 +197,7 @@ function long_div2(n, k, m, a, b){
         }
         remainder = long_sub(n, m + k, remainder, subtrahend);
     }
-    for (var i = 0; i < k; i++) {
+    for (int i = 0; i < k; i++) {
         out[1][i] = remainder[i];
     }
     out[1][k] = 0;
@@ -310,7 +310,7 @@ function signed_long_to_short(n, k, a){
 function prod(n, k, a, b) {
     // first compute the intermediate values. taken from BigMulShortLong
     var prod_val[50]; // length is 2 * k - 1
-    for (var i = 0; i < 2 * k - 1; i++) {
+    for (int i = 0; i < 2 * k - 1; i++) {
         prod_val[i] = 0;
         if (i < k) {
             for (var a_idx = 0; a_idx <= i; a_idx++) {
@@ -327,7 +327,7 @@ function prod(n, k, a, b) {
     var out[50]; // length is 2 * k
 
     var split[50][3]; // first dimension has length 2 * k - 1
-    for (var i = 0; i < 2 * k - 1; i++) {
+    for (int i = 0; i < 2 * k - 1; i++) {
         split[i] = SplitThreeFn(prod_val[i], n, n, n);
     }
 
@@ -358,7 +358,7 @@ function prod(n, k, a, b) {
 function prod2D(n, k, l, a, b) {
     // first compute the intermediate values. taken from BigMulShortLong
     var prod_val[20][50]; // length is 2l - 1 by 2k - 1
-    for (var i = 0; i < 2 * k - 1; i++) {
+    for (int i = 0; i < 2 * k - 1; i++) {
         for (var j = 0; j < 2 * l - 1; j ++) {
             prod_val[j][i] = 0;
         }
@@ -378,7 +378,7 @@ function prod2D(n, k, l, a, b) {
 
     var split[20][50][3]; // second dimension has length 2 * k - 1
     for (var j = 0; j < 2 * l - 1; j ++) {
-        for (var i = 0; i < 2 * k - 1; i++) {
+        for (int i = 0; i < 2 * k - 1; i++) {
             split[j][i] = SplitThreeFn(prod_val[j][i], n, n, n);
         }
     }
@@ -439,7 +439,7 @@ function prod_mod(n, k, a, b, p) {
 function mod_exp(n, k, a, p, e) {
     var eBits[500]; // length is k * n
     var bitlength; 
-    for (var i = 0; i < k; i++) {
+    for (int i = 0; i < k; i++) {
         for (var j = 0; j < n; j++) {
             eBits[j + n * i] = (e[i] >> j) & 1;
             if(eBits[j + n * i] == 1)
@@ -448,7 +448,7 @@ function mod_exp(n, k, a, p, e) {
     }
 
     var out[50]; // length is k
-    for (var i = 0; i < 50; i++) {
+    for (int i = 0; i < 50; i++) {
         out[i] = 0;
     }
     out[0] = 1;
@@ -486,21 +486,21 @@ function mod_exp(n, k, a, p, e) {
 // else computes inv = a^(p-2) mod p
 function mod_inv(n, k, a, p) {
     var isZero = 1;
-    for (var i = 0; i < k; i++) {
+    for (int i = 0; i < k; i++) {
         if (a[i] != 0) {
             isZero = 0;
         }
     }
     if (isZero == 1) {
         var ret[50];
-        for (var i = 0; i < k; i++) {
+        for (int i = 0; i < k; i++) {
             ret[i] = 0;
         }
         return ret;
     }
 
     var pCopy[50];
-    for (var i = 0; i < 50; i++) {
+    for (int i = 0; i < 50; i++) {
         if (i < k) {
             pCopy[i] = p[i];
         } else {
@@ -509,7 +509,7 @@ function mod_inv(n, k, a, p) {
     }
 
     var two[50];
-    for (var i = 0; i < 50; i++) {
+    for (int i = 0; i < 50; i++) {
         two[i] = 0;
     }
     two[0] = 2;

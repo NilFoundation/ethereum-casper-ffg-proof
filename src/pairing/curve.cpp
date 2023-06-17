@@ -386,7 +386,7 @@ template EllipticCurveScalarMultiply(n, k, b, x, p){
     var Bits[250]; 
     var BitLength;
     var SigBits=0;
-    for (var i = 0; i < 250; i++) {
+    for (int i = 0; i < 250; i++) {
         Bits[i] = (x >> i) & 1;
         if(Bits[i] == 1){
             SigBits++;
@@ -462,7 +462,7 @@ template EllipticCurveScalarMultiplyUnequal(n, k, b, x, p){
     var Bits[250]; 
     var BitLength;
     var SigBits=0;
-    for (var i = 0; i < 250; i++) {
+    for (int i = 0; i < 250; i++) {
         Bits[i] = (x >> i) & 1;
         if(Bits[i] == 1){
             SigBits++;

@@ -75,7 +75,7 @@ template Fp12Add(n, k, p) {
     signal input b[6][2][k];
     signal output out[6][2][k];
     component adders[6][2];
-    for (var i = 0; i < 6; i ++) {
+    for (int i = 0; i < 6; i ++) {
         for (var j = 0; j < 2; j ++) {
             adders[i][j] = FpAdd(n,k, p);
             for (var m = 0; m < k; m ++) {
@@ -214,7 +214,7 @@ template SignedFp12MultiplyNoCarryUnequal(n, ka, kb, m_out){
     component a1b0 = BigMultShortLong2DUnequal(n, ka, kb, l, l);
     component a1b1 = BigMultShortLong2DUnequal(n, ka, kb, l, l);
     
-    for (var i = 0; i < l; i ++) {
+    for (int i = 0; i < l; i ++) {
         for (var j = 0; j < ka; j ++) {
             a0b0.a[i][j] <== a[i][0][j];
             a0b1.a[i][j] <== a[i][0][j];
@@ -235,7 +235,7 @@ template SignedFp12MultiplyNoCarryUnequal(n, ka, kb, m_out){
     // X[][1] = a0 b1 + a1 b0 
     // X[][0] = sum_{i=0}^10 X[i][0] * w^i 
     signal X[2 * l - 1][2][ka + kb - 1];
-    for (var i = 0; i < 2 * l - 1; i++) {
+    for (int i = 0; i < 2 * l - 1; i++) {
         for (var j = 0; j < ka + kb - 1; j++) {
             X[i][0][j] <== a0b0.out[i][j] - a1b1.out[i][j];
             X[i][1][j] <== a0b1.out[i][j] + a1b0.out[i][j];
@@ -244,7 +244,7 @@ template SignedFp12MultiplyNoCarryUnequal(n, ka, kb, m_out){
 
     // X[i+6][0] w^{i+6} = X[i+6][0] * XI0 * w^i + X[i+6][0] * w^i       * u 
     // X[i+6][1] w^{i+6} = - X[i+6][1] * w^i       X[i+6][1] * XI0 * w^i * u 
-    for (var i = 0; i < l; i++)for (var j = 0; j < ka + kb - 1; j++) {
+    for (int i = 0; i < l; i++)for (var j = 0; j < ka + kb - 1; j++) {
         if (i < l - 1) {
             out[i][0][j] <== X[i][0][j] + X[l + i][0][j]*XI0 - X[l + i][1][j];
             out[i][1][j] <== X[i][1][j] + X[l + i][0][j]     + X[l + i][1][j];
@@ -277,13 +277,13 @@ template Fp12Compress(n, k, m, p, m_out){
     signal output out[l][2][k];
 
     component reduce[l][2];
-    for (var i = 0; i < l; i++)for (var j = 0; j < 2; j++){
+    for (int i = 0; i < l; i++)for (var j = 0; j < 2; j++){
         reduce[i][j] = PrimeReduce(n, k, m, p, m_out);
         for (var idx = 0; idx < k + m; idx++) 
             reduce[i][j].in[idx] <== in[i][j][idx];
     }
 
-    for (var i = 0; i < l; i++)for (var j = 0; j < 2; j++)for (var idx = 0; idx < k; idx++) 
+    for (int i = 0; i < l; i++)for (var j = 0; j < 2; j++)for (var idx = 0; idx < k; idx++)
         out[i][j][idx] <== reduce[i][j].out[idx];
 }
 
@@ -302,17 +302,17 @@ template SignedFp12MultiplyNoCarryCompress(n, k, p, m_in, m_out) {
 
     var LOGK1 = log_ceil(6*k*(2+XI0));
     component nocarry = SignedFp12MultiplyNoCarry(n, k, 2*m_in + LOGK1);
-    for (var i = 0; i < l; i ++)for(var j=0; j<2; j++)for(var idx=0; idx<k; idx++){ 
+    for (int i = 0; i < l; i ++)for(var j=0; j<2; j++)for(var idx=0; idx<k; idx++){
         nocarry.a[i][j][idx] <== a[i][j][idx];
         nocarry.b[i][j][idx] <== b[i][j][idx];
     }
 
     component reduce = Fp12Compress(n, k, k-1, p, m_out);
-    for (var i = 0; i < l; i++)for (var j = 0; j < 2; j++)
+    for (int i = 0; i < l; i++)for (var j = 0; j < 2; j++)
         for (var idx = 0; idx < 2 * k - 1; idx++) 
             reduce.in[i][j][idx] <== nocarry.out[i][j][idx];
 
-    for (var i = 0; i < l; i++)for (var j = 0; j < 2; j++)
+    for (int i = 0; i < l; i++)for (var j = 0; j < 2; j++)
         for (var idx = 0; idx < k; idx++) 
             out[i][j][idx] <== reduce.out[i][j][idx];
 }
@@ -356,7 +356,7 @@ template Fp12Multiply(n, k, p) {
     var LOGK2 = log_ceil(6*k*k*(2+XI0)); 
     component no_carry = SignedFp12MultiplyNoCarryCompress(n, k, p, n, 3*n + LOGK2);
     // registers abs val < 2^{3n} * 6*(2 + XI0) * k^2 )
-    for (var i = 0; i < l; i++)for(var j = 0; j < 2; j++){
+    for (int i = 0; i < l; i++)for(var j = 0; j < 2; j++){
         for (var idx = 0; idx < k; idx++) {
             no_carry.a[i][j][idx] <== a[i][j][idx];
             no_carry.b[i][j][idx] <== b[i][j][idx];
@@ -364,12 +364,12 @@ template Fp12Multiply(n, k, p) {
     }
     component carry_mod;
     carry_mod = SignedFp12CarryModP(n, k, 3*n + LOGK2, p);
-    for (var i = 0; i < l; i++)for (var j = 0; j < 2; j++)
+    for (int i = 0; i < l; i++)for (var j = 0; j < 2; j++)
         for (var idx = 0; idx < k; idx++)
 		    carry_mod.in[i][j][idx] <== no_carry.out[i][j][idx];
         
     
-    for (var i = 0; i < l; i++)for (var j = 0; j < 2; j++)
+    for (int i = 0; i < l; i++)for (var j = 0; j < 2; j++)
         for (var idx = 0; idx < k; idx++)
             out[i][j][idx] <== carry_mod.out[i][j][idx];
 }
@@ -403,7 +403,7 @@ template Fp6Invert(n, k, p) {
     signal input a2[2][k];
     var out[6][2][50] = find_Fp6_inverse(n, k, p, a0, a1, a2);
     signal output real_out[6][2][k];
-    for (var i = 0; i < 6; i++) {
+    for (int i = 0; i < 6; i++) {
         for (var j = 0; j < 2; j ++) {
             for (var idx = 0; idx < k; idx++) {
                 real_out[i][j][idx] <-- out[i][j][idx];
@@ -420,7 +420,7 @@ template Fp12Invert(n, k, p){
     signal output out[6][2][k];
 
     var inverse[6][2][50] = find_Fp12_inverse(n, k, p, in); // 6 x 2 x 50, only 6 x 2 x k relevant
-    for (var i = 0; i < 6; i ++) {
+    for (int i = 0; i < 6; i ++) {
         for (var j = 0; j < 2; j ++) {
             for (var m = 0; m < k; m ++) {
                 out[i][j][m] <-- inverse[i][j][m];

@@ -48,7 +48,7 @@ template PointOnLineFp2(n, k, p) {
     component diff_mod[2];
     for (var j = 0; j < 2; j ++) {
         diff_mod[j] = SignedCheckCarryModToZero(n, k, 3*n + LOGK2, p);
-        for (var i = 0; i < k; i ++) {
+        for (int i = 0; i < k; i ++) {
             diff_mod[j].in[i] <== diff_red[j].out[i];
         }
     }
@@ -68,7 +68,7 @@ template PointOnCurveFp2(n, k, a, b, p){
     // compute x^3, y^2 
     component x_sq = SignedFp2MultiplyNoCarryUnequal(n, k, k, 2*n+1+LOGK); // 2k-1 registers in [0, 2*k*2^{2n}) 
     component y_sq = SignedFp2MultiplyNoCarryUnequal(n, k, k, 2*n+1+LOGK); // 2k-1 registers in [0, 2*k*2^{2n}) 
-    for (var i = 0; i < 2; i ++) {
+    for (int i = 0; i < 2; i ++) {
         for (var j = 0; j < k ; j ++) {
             x_sq.a[i][j] <== in[0][i][j];
             x_sq.b[i][j] <== in[0][i][j];
@@ -77,7 +77,7 @@ template PointOnCurveFp2(n, k, a, b, p){
         }
     }
     component x_cu = SignedFp2MultiplyNoCarryUnequal(n, 2*k-1, k, 3*n+2*LOGK+2); // 3k-2 registers in [0, 4*k^2 * 2^{3n}) 
-    for (var i = 0; i < 2; i ++) {
+    for (int i = 0; i < 2; i ++) {
         for (var j = 0; j < 2*k-1; j ++) {
             x_cu.a[i][j] <== x_sq.out[i][j];
         }
@@ -112,7 +112,7 @@ template PointOnCurveFp2(n, k, a, b, p){
     // cu_red has k registers < (2k-1)*(4*k^2+2/2^n)2^{4n} < 2^{4n + 3LOGK + 4}
 
     component y_sq_red[2]; // k registers < 2k^2*2^{3n} 
-    for (var i = 0; i < 2; i ++) {
+    for (int i = 0; i < 2; i ++) {
         y_sq_red[i] = PrimeReduce(n, k, k-1, p, 3*n + 2*LOGK + 1);
         for(var j=0; j<2*k-1; j++){
             y_sq_red[i].in[j] <== y_sq.out[i][j];
@@ -142,14 +142,14 @@ template EllipticCurveFunction(n, k, a, b, p){
 
     // compute x^3, y^2 
     component x_sq = SignedFp2MultiplyNoCarryUnequal(n, k, k, 2*n+1+LOGK); // 2k-1 registers in [0, 2*k*2^{2n}) 
-    for (var i = 0; i < 2; i ++) {
+    for (int i = 0; i < 2; i ++) {
         for (var j = 0; j < k ; j ++) {
             x_sq.a[i][j] <== in[i][j];
             x_sq.b[i][j] <== in[i][j];
         }
     }
     component x_cu = SignedFp2MultiplyNoCarryUnequal(n, 2*k-1, k, 3*n+2*LOGK+2); // 3k-2 registers in [0, 4*k^2 * 2^{3n}) 
-    for (var i = 0; i < 2; i ++) {
+    for (int i = 0; i < 2; i ++) {
         for (var j = 0; j < 2*k-1; j ++) {
             x_cu.a[i][j] <== x_sq.out[i][j];
         }
@@ -206,7 +206,7 @@ template PointOnTangentFp2(n, k, a, p){
     var LOGK3 = log_ceil((2*k-1)*(12*k*k) + 1);
     assert(4*n + LOGK3 < 251);
     component x_sq = SignedFp2MultiplyNoCarryUnequal(n, k, k, 2*n+1+LOGK); // 2k-1 registers in [0, 2*k*2^{2n}) 
-    for (var i = 0; i < 2; i ++) {
+    for (int i = 0; i < 2; i ++) {
         for (var j = 0; j < k ; j ++) {
             x_sq.a[i][j] <== in[0][0][i][j];
             x_sq.b[i][j] <== in[0][0][i][j];
@@ -238,7 +238,7 @@ template PointOnTangentFp2(n, k, a, p){
     
     // prime reduce right - left 
     component diff_red[2];
-    for (var i = 0; i < 2; i ++) {
+    for (int i = 0; i < 2; i ++) {
         diff_red[i] = PrimeReduce(n, k, 2*k-2, p, 4*n + LOGK3);
         for (var j = 0; j < 3*k-2; j ++) {
             if (j < 2*k-1) {
@@ -252,7 +252,7 @@ template PointOnTangentFp2(n, k, a, p){
     // inputs of diff_red has registers < (12k^2 + 12k/2^n)*2^{3n} 
     // diff_red.out has registers < ((2k-1)*12k^2 + 1) * 2^{4n} assuming 12k(2k-1) <= 2^n
     component constraint[2];
-    for (var i = 0; i < 2; i ++) {
+    for (int i = 0; i < 2; i ++) {
         constraint[i] = SignedCheckCarryModToZero(n, k, 4*n + LOGK3, p);
         for (var j = 0; j < k; j ++) {
             constraint[i].in[j] <== diff_red[i].out[j];
@@ -306,7 +306,7 @@ template EllipticCurveAddUnequalFp2(n, k, p) {
     
     component dx_sq = BigMultShortLong2D(n, k, 2); // 2k-1 registers abs val < 2k*2^{2n} 
     component dy_sq = BigMultShortLong2D(n, k, 2); // 2k-1 registers abs val < 2k*2^{2n}
-    for (var i = 0; i < 2; i ++) {
+    for (int i = 0; i < 2; i ++) {
         for (var j = 0; j < k; j ++) {
             dx_sq.a[i][j] <== b[0][i][j] - a[0][i][j];
             dx_sq.b[i][j] <== b[0][i][j] - a[0][i][j];
@@ -544,7 +544,7 @@ template EllipticCurveScalarMultiplyFp2(n, k, b, x, p){
     var Bits[250]; 
     var BitLength;
     var SigBits=0;
-    for (var i = 0; i < 250; i++) {
+    for (int i = 0; i < 250; i++) {
         Bits[i] = (x >> i) & 1;
         if(Bits[i] == 1){
             SigBits++;
@@ -622,7 +622,7 @@ template EllipticCurveScalarMultiplyUnequalFp2(n, k, b, x, p){
     var Bits[250]; 
     var BitLength;
     var SigBits=0;
-    for (var i = 0; i < 250; i++) {
+    for (int i = 0; i < 250; i++) {
         Bits[i] = (x >> i) & 1;
         if(Bits[i] == 1){
             SigBits++;

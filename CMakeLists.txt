@@ -6,7 +6,6 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake"
 include(CMConfig)
 include(CMDeploy)
 include(CMSetupVersion)
-include(CompileCircuit)
 
 cm_workspace(ethereum)
 
@@ -29,101 +28,83 @@ cm_project(sync_committee WORKSPACE_NAME ${CMAKE_WORKSPACE_NAME} LANGUAGES ASM C
 cm_setup_version(VERSION 0.1.0 PREFIX ${CMAKE_WORKSPACE_NAME}_${CMAKE_PROJECT_NAME})
 
 add_library(${CMAKE_WORKSPACE_NAME}_${CMAKE_PROJECT_NAME} OBJECT
-            include/ethereum/sync_committee/constants.hpp
             include/ethereum/sync_committee/hash_to_field.hpp
-            src/inputs.cpp
+            include/ethereum/sync_committee/constants.hpp
+
+        src/bls.cpp
+            include/ethereum/sync_committee/inputs.hpp
             src/poseidon.cpp
-            src/ssz.cpp
-            src/sync_committee.cpp)
+        include/ethereum/sync_committee/ssz.hpp
+        include/ethereum/sync_committee/sync_committee.hpp)
+
+target_include_directories(${CMAKE_WORKSPACE_NAME}_${CMAKE_PROJECT_NAME} PUBLIC
+                           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+                           $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>)
+
+target_link_libraries(${CMAKE_WORKSPACE_NAME}_${CMAKE_PROJECT_NAME} PUBLIC
+                      crypto3::algebra
+                      crypto3::block
+                      crypto3::blueprint
+                      crypto3::codec
+                      crypto3::containers
+                      crypto3::hash
+                      crypto3::kdf
+                      crypto3::mac
+                      marshalling::core
+                      marshalling::crypto3_algebra
+                      marshalling::crypto3_multiprecision
+                      marshalling::crypto3_zk
+                      crypto3::math
+                      crypto3::modes
+                      crypto3::multiprecision
+                      crypto3::passhash
+                      crypto3::pbkdf
+                      crypto3::threshold
+                      crypto3::pkpad
+                      crypto3::pubkey
+                      crypto3::random
+                      crypto3::stream
+                      crypto3::vdf
+                      crypto3::zk
+
+                      ${Boost_LIBRARIES})
 
 set_target_properties(${CMAKE_WORKSPACE_NAME}_${CMAKE_PROJECT_NAME} PROPERTIES
                       LINKER_LANGUAGE CXX
                       EXPORT_NAME ${CMAKE_PROJECT_NAME}
-                      CXX_STANDARD 17
+                      CXX_STANDARD 20
                       CXX_STANDARD_REQUIRED TRUE)
 
-add_circuit(${CMAKE_WORKSPACE_NAME}_${CMAKE_PROJECT_NAME}_step
-            SOURCES src/step.cpp
+add_library(${CMAKE_WORKSPACE_NAME}_${CMAKE_PROJECT_NAME}_step OBJECT
+            src/step.cpp)
 
-            INCLUDE_DIRECTORIES
-            $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
-            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+target_include_directories(${CMAKE_WORKSPACE_NAME}_${CMAKE_PROJECT_NAME}_step PUBLIC
+                           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+                           $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>)
 
-            LINK_LIBRARIES
-            crypto3::algebra
-            crypto3::block
-            crypto3::blueprint
-            crypto3::codec
-            crypto3::containers
-            crypto3::hash
-            crypto3::kdf
-            crypto3::mac
-            marshalling::core
-            marshalling::crypto3_algebra
-            marshalling::crypto3_multiprecision
-            marshalling::crypto3_zk
-            crypto3::math
-            crypto3::modes
-            crypto3::multiprecision
-            crypto3::passhash
-            crypto3::pbkdf
-            crypto3::threshold
-            crypto3::pkpad
-            crypto3::pubkey
-            crypto3::random
-            crypto3::stream
-            crypto3::vdf
-            crypto3::zk
+target_link_libraries(${CMAKE_WORKSPACE_NAME}_${CMAKE_PROJECT_NAME}_step PUBLIC
 
-            ${CMAKE_WORKSPACE_NAME}_${CMAKE_PROJECT_NAME}
-
-            ${Boost_LIBRARIES})
+            ${CMAKE_WORKSPACE_NAME}_${CMAKE_PROJECT_NAME})
 
 set_target_properties(${CMAKE_WORKSPACE_NAME}_${CMAKE_PROJECT_NAME}_step PROPERTIES
                       LINKER_LANGUAGE CXX
                       EXPORT_NAME ${CMAKE_PROJECT_NAME}
-                      CXX_STANDARD 17
+                      CXX_STANDARD 20
                       CXX_STANDARD_REQUIRED TRUE)
 
-add_circuit(${CMAKE_WORKSPACE_NAME}_${CMAKE_PROJECT_NAME}_rotate
-            SOURCES src/rotate.cpp
+add_library(${CMAKE_WORKSPACE_NAME}_${CMAKE_PROJECT_NAME}_rotate OBJECT
+            src/rotate.cpp)
 
-            INCLUDE_DIRECTORIES
-            $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
-            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+target_include_directories(${CMAKE_WORKSPACE_NAME}_${CMAKE_PROJECT_NAME}_rotate PUBLIC
+                           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+                           $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>)
 
-            LINK_LIBRARIES
-            crypto3::algebra
-            crypto3::block
-            crypto3::blueprint
-            crypto3::codec
-            crypto3::containers
-            crypto3::hash
-            crypto3::kdf
-            crypto3::mac
-            marshalling::core
-            marshalling::crypto3_algebra
-            marshalling::crypto3_multiprecision
-            marshalling::crypto3_zk
-            crypto3::math
-            crypto3::modes
-            crypto3::multiprecision
-            crypto3::passhash
-            crypto3::pbkdf
-            crypto3::threshold
-            crypto3::pkpad
-            crypto3::pubkey
-            crypto3::random
-            crypto3::stream
-            crypto3::vdf
-            crypto3::zk
+target_link_libraries(${CMAKE_WORKSPACE_NAME}_${CMAKE_PROJECT_NAME}_rotate PUBLIC
 
-            ${CMAKE_WORKSPACE_NAME}_${CMAKE_PROJECT_NAME}
-
-            ${Boost_LIBRARIES})
+                      ${CMAKE_WORKSPACE_NAME}_${CMAKE_PROJECT_NAME})
 
 set_target_properties(${CMAKE_WORKSPACE_NAME}_${CMAKE_PROJECT_NAME}_rotate PROPERTIES
                       LINKER_LANGUAGE CXX
                       EXPORT_NAME ${CMAKE_PROJECT_NAME}
-                      CXX_STANDARD 17
+                      CXX_STANDARD 20
                       CXX_STANDARD_REQUIRED TRUE)

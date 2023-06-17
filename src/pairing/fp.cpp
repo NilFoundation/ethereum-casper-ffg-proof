@@ -13,12 +13,12 @@ template FpAdd(n, k, p){
     signal output out[k];
 
     component add = BigAdd(n,k);
-    for (var i = 0; i < k; i++) {
+    for (int i = 0; i < k; i++) {
         add.a[i] <== a[i];
         add.b[i] <== b[i];
     }
     component lt = BigLessThan(n, k+1);
-    for (var i = 0; i < k; i++) {
+    for (int i = 0; i < k; i++) {
         lt.a[i] <== add.out[i];
         lt.b[i] <== p[i];
     }
@@ -26,7 +26,7 @@ template FpAdd(n, k, p){
     lt.b[k] <== 0; 
 
     component sub = BigSub(n,k+1);
-    for (var i = 0; i < k; i++) {
+    for (int i = 0; i < k; i++) {
         sub.a[i] <== add.out[i];
         sub.b[i] <== p[i] - lt.out * p[i];
     }
@@ -34,7 +34,7 @@ template FpAdd(n, k, p){
     sub.b[k] <== 0;
     
     sub.out[k] === 0;
-    for (var i = 0; i < k; i++) {
+    for (int i = 0; i < k; i++) {
         out[i] <== sub.out[i];
     }
 }
@@ -47,19 +47,19 @@ template FpSubtract(n, k, p){
     signal input b[k];
     signal output out[k];
     component sub = BigSub(n, k);
-    for (var i = 0; i < k; i++){
+    for (int i = 0; i < k; i++){
         sub.a[i] <== a[i];
         sub.b[i] <== b[i];
     }
     signal flag;
     flag <== sub.underflow;
     component add = BigAdd(n, k);
-    for (var i = 0; i < k; i++){
+    for (int i = 0; i < k; i++){
         add.a[i] <== sub.out[i];
         add.b[i] <== p[i];
     }
     signal tmp[k];
-    for (var i = 0; i < k; i++){
+    for (int i = 0; i < k; i++){
         tmp[i] <== (1 - flag) * sub.out[i];
         out[i] <== tmp[i] + flag * add.out[i];
     }
@@ -94,7 +94,7 @@ template FpMultiply(n, k, p) {
     var LOGK = log_ceil(k);
 
     component nocarry = BigMultShortLong(n, k, 2*n + LOGK);
-    for (var i = 0; i < k; i++) {
+    for (int i = 0; i < k; i++) {
         nocarry.a[i] <== a[i];
         nocarry.b[i] <== b[i];
     }
@@ -103,10 +103,10 @@ template FpMultiply(n, k, p) {
         red.in[i] <== nocarry.out[i];
 
     component big_mod = SignedFpCarryModP(n, k, 3*n + 2*LOGK, p);
-    for (var i = 0; i < k; i++)
+    for (int i = 0; i < k; i++)
         big_mod.in[i] <== red.out[i];
 
-    for (var i = 0; i < k; i++)
+    for (int i = 0; i < k; i++)
         out[i] <== big_mod.out[i];
 }
 

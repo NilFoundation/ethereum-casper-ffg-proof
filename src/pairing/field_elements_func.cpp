@@ -37,13 +37,13 @@ function find_Fp_inverse(n, k, num, p) {
     // should be less than 1000 for our cases...
     for(var l=0; l<1000; l++){
         var ka = 0;
-        for (var i = 0; i < k; i++) {
+        for (int i = 0; i < k; i++) {
             if (a[i] != 0) {
                 ka = i + 1;
             }
         }
         if (ka == 0) {
-            for (var i = 0; i < k; i++) {
+            for (int i = 0; i < k; i++) {
                 ret[i] = x[i];
             }
             return ret;
@@ -204,7 +204,7 @@ function find_Fp2_diff(n, k, a, b, p){
 function find_Fp2_exp(n, k, a, p, e){
     var eBits[800]; // length is (2k-1) * n
     var bitLength; 
-    for (var i = 0; i < 2*k; i++) {
+    for (int i = 0; i < 2*k; i++) {
         for (var j = 0; j < n; j++) {
             eBits[j + n * i] = (e[i] >> j) & 1;
             if(eBits[j + n * i] == 1)

@@ -23,7 +23,7 @@ function find_Fp12_product(n, k, a, b, p) {
     var neg_b0[l][50];
     var neg_b1[l][50];
     var out[l][2][50];
-    for (var i = 0; i < l; i ++) { 
+    for (int i = 0; i < l; i ++) {
         for ( var j = 0; j < k; j ++) {
             a0[i][j] = a[i][0][j];
             a1[i][j] = a[i][1][j];
@@ -48,7 +48,7 @@ function find_Fp12_product(n, k, a, b, p) {
     var a1b0_var[20][50] = prod2D(n, k, l, a1, b0);
     var a0b1_neg[20][50] = prod2D(n, k, l, a0, neg_b1);
     var a1b0_neg[20][50] = prod2D(n, k, l, a1, neg_b0);
-    for (var i = 0; i < 2*l - 1; i ++) { // compute initial rep (deg w = 10)
+    for (int i = 0; i < 2*l - 1; i ++) { // compute initial rep (deg w = 10)
         real_init[i] = long_add(n, 2*k, a0b0_var[i], a1b1_neg[i]); // 2*k+1 registers each
         imag_init[i] = long_add(n, 2*k, a0b1_var[i], a1b0_var[i]);
         imag_init_neg[i] = long_add(n, 2*k, a0b1_neg[i], a1b0_neg[i]);
@@ -58,10 +58,10 @@ function find_Fp12_product(n, k, a, b, p) {
     var real_final[l][50];
     var imag_final[l][50];
     var zeros[50]; // to balance register sizes
-    for (var i = 0; i < 50; i ++) {
+    for (int i = 0; i < 50; i ++) {
         zeros[i] = 0;
     }
-    for (var i = 0; i < l; i ++) {
+    for (int i = 0; i < l; i ++) {
         if (i == l - 1) {
             real_carry[i] = long_add(n, 2*k+1, zeros, zeros);
             imag_carry[i] = long_add(n, 2*k+1, zeros, zeros);
@@ -70,17 +70,17 @@ function find_Fp12_product(n, k, a, b, p) {
             imag_carry[i] = long_add(n, 2*k+1, imag_init[i+l], real_init[i+l]);
         }
     }
-    for (var i = 0; i < l; i ++) {
+    for (int i = 0; i < l; i ++) {
         real_final[i] = long_add_unequal(n, 2*k+2, 2*k+1, real_carry[i], real_init[i]); // now 2*k+3 registers
         imag_final[i] = long_add_unequal(n, 2*k+2, 2*k+1, imag_carry[i], imag_init[i]);
     }
     var XYreal_temp[l][2][50];
     var XYimag_temp[l][2][50];
-    for (var i = 0; i < l; i ++) {
+    for (int i = 0; i < l; i ++) {
         XYreal_temp[i] = long_div2(n, k, k+3, real_final[i], p); // k+4 register quotient, k register remainder
         XYimag_temp[i] = long_div2(n, k, k+3, imag_final[i], p);
     }
-    for (var i = 0; i < l; i ++) {
+    for (int i = 0; i < l; i ++) {
         for (var j = 0; j < k; j ++) {
             out[i][0][j] = XYreal_temp[i][1][j];
             out[i][1][j] = XYimag_temp[i][1][j];
@@ -96,7 +96,7 @@ function find_Fp12_inverse(n, k, p, a) {
     var A[6][2][50];
     var B[6][2][50];
     var Bw[6][2][50];
-    for (var i = 0; i < 3; i ++) {
+    for (int i = 0; i < 3; i ++) {
         for (var j = 0; j < 2; j ++) {
             for (var m = 0; m < k; m ++) {
                 A[2*i+1][j][m] = 0;
@@ -112,7 +112,7 @@ function find_Fp12_inverse(n, k, p, a) {
     var B2[6][2][50] = find_Fp12_product(n, k, B, B, p);
     var conj[6][2][50] = find_Fp12_diff(n, k, A, Bw, p);
     var w2[6][2][50];
-    for (var i = 0; i < 6; i ++) {
+    for (int i = 0; i < 6; i ++) {
         for (var j = 0; j < 2; j ++) {
             for (var m = 0; m < k; m ++) {
                 if (i == 2 && j == 0 && m == 0) {
@@ -128,7 +128,7 @@ function find_Fp12_inverse(n, k, p, a) {
     var a0[2][50];
     var a1[2][50];
     var a2[2][50];
-    for (var i = 0; i < 2; i ++) {
+    for (int i = 0; i < 2; i ++) {
         for (var m = 0; m < k; m ++) {
             a0[i][m] = conjProd[0][i][m];
             a1[i][m] = conjProd[2][i][m];
@@ -155,7 +155,7 @@ function find_Fp6_inverse(n, k, p, a0, a1, a2) {
     var a0a1a2[2][50] = find_Fp2_product(n, k, a0a1, a2, p);
 
     var v3[2][50]; // v^3 = 1 + u
-    for (var i = 0; i < 2; i ++) {
+    for (int i = 0; i < 2; i ++) {
         for (var j = 0; j < k; j ++) {
             if (j == 0) {
                 v3[i][j] = 1;
@@ -166,7 +166,7 @@ function find_Fp6_inverse(n, k, p, a0, a1, a2) {
     }
 
     var three_v3[2][50]; // 3v^3 = 3 + 3u
-    for (var i = 0; i < 2; i ++) {
+    for (int i = 0; i < 2; i ++) {
         for (var j = 0; j < k; j ++) {
             if (j == 0) {
                 three_v3[i][j] = 3;
@@ -177,7 +177,7 @@ function find_Fp6_inverse(n, k, p, a0, a1, a2) {
     }
 
     var v6[2][50]; // v^6 = 2u
-    for (var i = 0; i < 2; i ++) {
+    for (int i = 0; i < 2; i ++) {
         for (var j = 0; j < k; j ++) {
             if (i == 1 && j == 0) {
                 v6[i][j] = 2;

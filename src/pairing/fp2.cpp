@@ -12,7 +12,7 @@ template Fp2Add(n, k, p) {
     signal output out[2][k];
 
     component adders[2];
-    for (var i = 0; i < 2; i++) {
+    for (int i = 0; i < 2; i++) {
         adders[i] = FpAdd(n, k, p);
         for (var j = 0; j < k; j++) {
             adders[i].a[j] <== a[i][j];
@@ -312,7 +312,7 @@ template Fp2Invert(n, k, p){
     signal output out[2][k];
 
     var inverse[2][50] = find_Fp2_inverse(n, k, in, p); // 2 x 50, only 2 x k relevant
-    for (var i = 0; i < 2; i ++) {
+    for (int i = 0; i < 2; i ++) {
         for (var j = 0; j < k; j ++) {
             out[i][j] <-- inverse[i][j];
         }
@@ -521,7 +521,7 @@ template Fp2IsEqual(n, k, p){
     for(var j=0; j<2; j++){
         lta[j] = BigLessThan(n, k);
         ltb[j] = BigLessThan(n, k);
-        for (var i = 0; i < k; i ++) {
+        for (int i = 0; i < k; i ++) {
             lta[j].a[i] <== a[j][i]; 
             lta[j].b[i] <== p[i]; 
 

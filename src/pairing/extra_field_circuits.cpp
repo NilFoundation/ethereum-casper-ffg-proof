@@ -19,7 +19,7 @@ template FieldAdd2D(n, k, l) {
     signal output c[l][k];
 
     component adders[l];
-    for (var i = 0; i < l; i++) {
+    for (int i = 0; i < l; i++) {
         adders[i] = BigAddModP(n, k);
         for (var j = 0; j < k; j++) {
             adders[i].a[j] <== a[i][j];
@@ -42,7 +42,7 @@ template PolynomialReduce(l) {
 
     var residue[2*l-1];
     signal quotient[l-1];
-    for (var i = 0; i < 2*l-1; i++) {
+    for (int i = 0; i < 2*l-1; i++) {
         residue[i] = a[i];
     }
     for (var i = l-2; i >= 0; i --) {
@@ -53,7 +53,7 @@ template PolynomialReduce(l) {
         residue[i+l] = 0;
     }
     component mult = BigMultShortLong(1, l+1);
-    for (var i = 0; i < l-1; i ++) {
+    for (int i = 0; i < l-1; i ++) {
         mult.a[i] <== quotient[i];
         mult.b[i] <== poly[i];
     }
@@ -62,13 +62,13 @@ template PolynomialReduce(l) {
     mult.b[l-1] <== poly[l-1];
     mult.b[l] <== 1;
     signal a_out[2*l-1];
-    for (var i = 0; i < 2*l-1; i++) {
+    for (int i = 0; i < 2*l-1; i++) {
         a_out[i] <== mult.out[i];
     }
-    for (var i = 0; i < l; i ++ ) {
+    for (int i = 0; i < l; i ++ ) {
         out[i] <-- residue[i];
     }
-    for (var i = 0; i < l; i ++) {
+    for (int i = 0; i < l; i ++) {
         a[i] === a_out[i] + out[i];
     }
     for (var i = l; i < 2*l-1; i ++) {
@@ -82,15 +82,15 @@ template Fp2PolynomialReduce(n, k, p) {
     var poly[2] = [1, 0]; // x^2 + 1 = 0
     signal output out[l][k];
 
-    for (var i = 0; i < k; i ++) {
+    for (int i = 0; i < k; i ++) {
         out[1][i] <== a[1][i];
     }
     component sub = FpSubtract(n, k, p);
-    for (var i = 0; i < k; i ++) {
+    for (int i = 0; i < k; i ++) {
         sub.a[i] <== a[0][i];
         sub.b[i] <== a[2][i];
     }
-    for (var i = 0; i < k; i ++) {
+    for (int i = 0; i < k; i ++) {
         out[0][i] <== sub.out[i];
     }
 }
@@ -113,21 +113,21 @@ template Fp2Multiply1(n, k, p) {
     signal output out[l][k];
 
     component mult = BigMultShortLong2D(n, k, l);
-    for (var i = 0; i < l; i ++) {
+    for (int i = 0; i < l; i ++) {
         for (var j = 0; j < k; j ++) {
             mult.a[i][j] <== a[i][j];
             mult.b[i][j] <== b[i][j];
         }
     } // out: 2l-1 x 2k-1 array of longs
     component longshorts[2*l-1];
-    for (var i = 0; i < 2*l-1; i++) {
+    for (int i = 0; i < 2*l-1; i++) {
         longshorts[i] = LongToShortNoEndCarry(n, 2*k-1);
         for (var j = 0; j < 2*k-1; j ++) {
             longshorts[i].in[j] <== mult.out[i][j];
         }
     } // out: 2l-1 x 2k array of shorts
     component bigmods[2*l-1];
-    for (var i = 0; i < 2*l-1; i ++) {
+    for (int i = 0; i < 2*l-1; i ++) {
         bigmods[i] = BigMod(n, k);
         for (var j = 0; j < 2*k; j ++) {
             bigmods[i].a[j] <== longshorts[i].out[j];
@@ -137,12 +137,12 @@ template Fp2Multiply1(n, k, p) {
         }
     } // out: 2l-1 x k array of shorts
     component reduce = Fp2PolynomialReduce(n, k, p);
-    for (var i = 0; i < 2*l-1; i ++) {
+    for (int i = 0; i < 2*l-1; i ++) {
         for (var j = 0; j < k; j ++) {
             reduce.a[i][j] <== bigmods[i].mod[j];
         }
     } // out: l x k array of shorts
-    for (var i = 0; i < l; i++) {
+    for (int i = 0; i < l; i++) {
         for (var j = 0; j < k; j++) {
             out[i][j] <== reduce.out[i][j];
         }
@@ -367,7 +367,7 @@ template Fp2multiply(n, k){
 function prod3D(n, k, l, a, b, c) {
     // first compute the intermediate values. taken from BigMulShortLong
     var prod_val[20][20]; // length is 3l - 2 by 3k - 2
-    for (var i = 0; i < 3 * k; i++) {
+    for (int i = 0; i < 3 * k; i++) {
         for (var j = 0; j < 3 * l; j ++) {
             prod_val[j][i] = 0;
         }
@@ -391,7 +391,7 @@ function prod3D(n, k, l, a, b, c) {
 
     var split[20][20][3]; // second dimension has length 3 * k - 1
     for (var j = 0; j < 3 * l - 1; j ++) {
-        for (var i = 0; i < 3 * k - 1; i++) {
+        for (int i = 0; i < 3 * k - 1; i++) {
             split[j][i] = SplitThreeFn(prod_val[j][i], n, n, n);
         }
     }
@@ -445,7 +445,7 @@ template Fp12MultiplyThree(n, k, p) {
     var c1[l][k];
     var neg_a0[l][20];
     var neg_a1[l][20];
-   for (var i = 0; i < l; i ++) { 
+   for (int i = 0; i < l; i ++) {
         for ( var j = 0; j < k; j ++) {
             a0[i][j] = a[i][0][j];
             a1[i][j] = a[i][1][j];
@@ -481,7 +481,7 @@ template Fp12MultiplyThree(n, k, p) {
     var a0b0c1_neg[20][20] = prod3D(n, k, l, neg_a0, b0, c1);
     var a1b1c1_var[20][20] = prod3D(n, k, l, a0, b1, c1);
 
-    for (var i = 0; i < 3 * l - 1; i ++) { // compute initial rep (deg w = 10)
+    for (int i = 0; i < 3 * l - 1; i ++) { // compute initial rep (deg w = 10)
         real_init[i] = long_add4(n, 3 * k, a0b0c0_var[i], a1b1c0_neg[i], a1b0c1_neg[i], a0b1c1_neg[i]); // 3 * k + 1 registers each
         imag_init[i] = long_add4(n, 3 * k, a1b0c0_var[i], a0b1c0_var[i], a0b0c1_var[i], a1b1c1_neg[i]);
 	imag_init_neg[i] = long_add4(n, 3 * k, a1b0c0_neg[i], a0b1c0_neg[i], a0b0c1_neg[i], a1b1c1_var[i]);
@@ -493,10 +493,10 @@ template Fp12MultiplyThree(n, k, p) {
     var real_final[l][20];
     var imag_final[l][20];
     var zeros[20]; // to balance register sizes
-    for (var i = 0; i < 20; i ++) {
+    for (int i = 0; i < 20; i ++) {
         zeros[i] = 0;
     }
-    for (var i = 0; i < l; i ++) {
+    for (int i = 0; i < l; i ++) {
         if (i == l - 1) {
             real_carry[i] = long_add4(n, 3*k+1, zeros, zeros, real_init[i + l], imag_init_neg[i + l]);
             imag_carry[i] = long_add4(n, 3*k+1, zeros, zeros, real_init[i + l], imag_init[i + l]);
@@ -505,7 +505,7 @@ template Fp12MultiplyThree(n, k, p) {
             imag_carry[i] = long_add4(n, 3*k+1, imag_init[i + l], real_init[i + l], real_init[i + 2 * l], real_init[i + 2 * l]);
         }
     }    
-    for (var i = 0; i < l; i ++) {
+    for (int i = 0; i < l; i ++) {
         real_final[i] = long_add_unequal(n, 3*k+2, 3*k+1, real_carry[i], real_init[i]); // now 3*k+3 registers
         imag_final[i] = long_add_unequal(n, 3*k+2, 3*k+1, imag_carry[i], imag_init[i]);
     }
@@ -518,11 +518,11 @@ template Fp12MultiplyThree(n, k, p) {
     // prod_imag[*][0][2 * k + 4] * p + prod_imag[*][1][k] = imag_final[*]
     signal prod_real[l][2][2 * k + 4];
     signal prod_imag[l][2][2 * k + 4];
-    for (var i = 0; i < l; i ++) {
+    for (int i = 0; i < l; i ++) {
         prod_real_temp[i] = long_div2(n, k, 2 * k + 3, real_final[i], p); // 2 * k + 4 register quotient, k register remainder
         prod_imag_temp[i] = long_div2(n, k, 2 * k + 3, imag_final[i], p);
     }
-    for (var i = 0; i < l; i ++) {
+    for (int i = 0; i < l; i ++) {
         for (var j = 0; j < 2 * k + 4; j ++) {
             prod_real[i][0][j] <-- prod_real_temp[i][0][j];
             prod_imag[i][0][j] <-- prod_imag_temp[i][0][j];
@@ -535,7 +535,7 @@ template Fp12MultiplyThree(n, k, p) {
             }
         }
     }
-    for (var i = 0; i < l; i ++) {
+    for (int i = 0; i < l; i ++) {
         for (var j = 0; j < k; j ++) {
             out[i][0][j] <== prod_real[i][1][j];
             out[i][1][j] <== prod_imag[i][1][j];
@@ -552,7 +552,7 @@ template Fp12MultiplyThree(n, k, p) {
         }
     }
     component lt[l][2];
-    for (var i = 0; i < l; i ++) {
+    for (int i = 0; i < l; i ++) {
         for (var j = 0; j < 2; j ++) {
             lt[i][j] = BigLessThan(n, k);
             for (var m = 0; m < k; m ++) {
@@ -564,7 +564,7 @@ template Fp12MultiplyThree(n, k, p) {
     }
 
     component div_range_checks[l][2][2 * k + 4];
-    for (var i = 0; i < l; i ++) {
+    for (int i = 0; i < l; i ++) {
         for (var j = 0; j < 2 * k + 4; j ++) {
             div_range_checks[i][0][j] = Num2Bits(n);
             div_range_checks[i][1][j] = Num2Bits(n);
@@ -587,7 +587,7 @@ template Fp12MultiplyThree(n, k, p) {
     component b0c1 = BigMultShortLong2D(n, k, l);
     component b1c0 = BigMultShortLong2D(n, k, l);
     component b1c1 = BigMultShortLong2D(n, k, l);
-    for (var i = 0; i < l; i ++) {
+    for (int i = 0; i < l; i ++) {
         for (var j = 0; j < k; j ++) {
             b0c0.a[i][j] <== b[i][0][j];
             b0c0.b[i][j] <== c[i][0][j];
@@ -612,7 +612,7 @@ template Fp12MultiplyThree(n, k, p) {
     component pb0c1 = BigMultShortLong2DUnequal(n, k, 2 * k - 1, l, 2 * l - 1);
     component pb1c0 = BigMultShortLong2DUnequal(n, k, 2 * k - 1, l, 2 * l - 1);
     component pb1c1 = BigMultShortLong2DUnequal(n, k, 2 * k - 1, l, 2 * l - 1);
-    for (var i = 0; i < l; i ++) {
+    for (int i = 0; i < l; i ++) {
         for (var j = 0; j < k; j ++) {
 	    a0b0c0.a[i][j] <== a[i][0][j];
 	    a0b0c1.a[i][j] <== a[i][0][j];
@@ -628,7 +628,7 @@ template Fp12MultiplyThree(n, k, p) {
 	    pb1c1.a[i][j] <== p[j];
 	}
     }
-    for (var i = 0; i < 2 * l - 1; i++) {
+    for (int i = 0; i < 2 * l - 1; i++) {
 	for (var j = 0; j < 2 * k - 1; j++) {
 	    a0b0c0.b[i][j] <== b0c0.out[i][j];
 	    a1b0c0.b[i][j] <== b0c0.out[i][j];
@@ -647,7 +647,7 @@ template Fp12MultiplyThree(n, k, p) {
     
     component p_prod_real0[l];
     component p_prod_imag0[l];
-    for (var i = 0; i < l; i ++) {
+    for (int i = 0; i < l; i ++) {
         p_prod_real0[i] = BigMultShortLongUnequal(n, k, 2 * k + 4);
         p_prod_imag0[i] = BigMultShortLongUnequal(n, k, 2 * k + 4);
 
@@ -667,7 +667,7 @@ template Fp12MultiplyThree(n, k, p) {
     var Y0[l][3 * k - 2];
     var Y1[l][3 * k - 2];
     var Y2[l][3 * k - 2];
-    for (var i = 0; i < l; i++) {
+    for (int i = 0; i < l; i++) {
 	for (var j = 0; j < 3 * k - 2; j++) {
 	    X0[i][j] = a0b0c0.out[i][j] + pb1c0.out[i][j] - a1b1c0.out[i][j] + pb0c1.out[i][j] - a1b0c1.out[i][j] + pb1c1.out[i][j] - a0b1c1.out[i][j];
 	    X1[i][j] = a0b0c0.out[i + l][j] + pb1c0.out[i + l][j] - a1b1c0.out[i + l][j] + pb0c1.out[i + l][j] - a1b0c1.out[i + l][j] + pb1c1.out[i + l][j] - a0b1c1.out[i + l][j];
@@ -684,7 +684,7 @@ template Fp12MultiplyThree(n, k, p) {
     }
     
     component carry_check[l][2];
-    for (var i = 0; i < l; i++) {
+    for (int i = 0; i < l; i++) {
 	if (3 * k - 2 < 2 * k + 4) {
             carry_check[i][0] = CheckCarryToZero(n, 3 * n + 4 + LOGK + LOGL, 2 * k + 4);
             carry_check[i][1] = CheckCarryToZero(n, 3 * n + 4 + LOGK + LOGL, 2 * k + 4);
