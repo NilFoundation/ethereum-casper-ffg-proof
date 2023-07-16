@@ -13,7 +13,8 @@
  * procedure until there is only one G1 point left.
  */
 
-template G1AddMany(SYNC_COMMITTEE_SIZE, LOG_2_SYNC_COMMITTEE_SIZE, N, K) {
+template<std::size_t SYNC_COMMITTEE_SIZE, std::size_t LOG_2_SYNC_COMMITTEE_SIZE, std::size_t N, std::size_t K>
+void G1AddMany() {
     // It is assumed that none of the input signals are ill-formed. The public
     // keys are checked such that they are all properly reduced and less than
     // the prime of the base field. The bits are assumed to be range checked
@@ -84,9 +85,9 @@ template G1Reduce(BATCH_SIZE, N, K) {
 }
 
 template parallel G1Add(N, K) {
-    var A1 = getCurveA1();
-    var B1 = getCurveB1();
-    var P[7] = getBLS128381Prime();
+    var A1 = CURVE_A1();
+    var B1 = CURVE_B1();
+    var P[7] = BLS128381_PRIME();
 
     signal input pubkey1[2][K];
     signal input pubkey2[2][K];
@@ -180,7 +181,7 @@ template G1BigIntToSignFlag(N, K) {
     signal input in[K];
     signal output out;
 
-    var P[K] = getBLS128381Prime();
+    var P[K] = BLS128381_PRIME();
     var LOG_K = log_ceil(K);
     component mul = BigMult(N, K);
 

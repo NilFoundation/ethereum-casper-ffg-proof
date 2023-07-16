@@ -34,7 +34,7 @@
  * @input  executionStateBranch   A Merkle proof for executionStateRoot
  * @input  publicInputsRoot       A commitment to all "public inputs"
  */
-void Step(const std::array<std::size_t, 32> &attestedHeaderRoot,
+[[circuit]] void Step(const std::array<std::size_t, 32> &attestedHeaderRoot,
           const std::array<std::size_t, 32> &attestedSlot,
           const std::array<std::size_t, 32> &attestedProposerIndex,
           const std::array<std::size_t, 32> &attestedParentRoot,
@@ -48,15 +48,15 @@ void Step(const std::array<std::size_t, 32> &attestedHeaderRoot,
           const std::array<std::size_t, 32> &finalizedStateRoot,
           const std::array<std::size_t, 32> &finalizedBodyRoot) {
 
-    std::size_t N = getNumBitsPerRegister();
-    std::size_t K = getNumRegisters();
-    std::size_t SYNC_COMMITTEE_SIZE = getSyncCommitteeSize();
-    std::size_t LOG_2_SYNC_COMMITTEE_SIZE = getLog2SyncCommitteeSize();
-    std::size_t FINALIZED_HEADER_DEPTH = getFinalizedHeaderDepth();
-    std::size_t FINALIZED_HEADER_INDEX = getFinalizedHeaderIndex();
-    std::size_t EXECUTION_STATE_ROOT_DEPTH = getExecutionStateRootDepth();
-    std::size_t EXECUTION_STATE_ROOT_INDEX = getExecutionStateRootIndex();
-    std::size_t TRUNCATED_SHA256_SIZE = getTruncatedSha256Size();
+    std::size_t N = NUM_BITS_PER_REGISTER();
+    std::size_t K = NUM_REGISTERS();
+    std::size_t SYNC_COMMITTEE_SIZE = SYNC_COMMITTEE_SIZE();
+    std::size_t LOG_2_SYNC_COMMITTEE_SIZE = LOG2_SYNC_COMMITTEE_SIZE();
+    std::size_t FINALIZED_HEADER_DEPTH = FINALIZED_HEADER_DEPTH();
+    std::size_t FINALIZED_HEADER_INDEX = FINALIZED_HEADER_INDEX();
+    std::size_t EXECUTION_STATE_ROOT_DEPTH = EXECUTION_STATE_ROOT_DEPTH();
+    std::size_t EXECUTION_STATE_ROOT_INDEX = EXECUTION_STATE_ROOT_INDEX();
+    std::size_t TRUNCATED_SHA256_SIZE = TRUNCATED_SHA256_SIZE();
 
     /* Sync Committee Protocol */
     signal input pubkeysX[SYNC_COMMITTEE_SIZE][K];

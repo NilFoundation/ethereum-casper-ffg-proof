@@ -26,15 +26,10 @@
                                     The finalized header and all associated
  fields.
  */
-void Rotate()() {
-    var N = getNumBitsPerRegister();
-    var K = getNumRegisters();
-    var SYNC_COMMITTEE_SIZE = getSyncCommitteeSize();
-    var LOG_2_SYNC_COMMITTEE_SIZE = getLog2SyncCommitteeSize();
-    var SYNC_COMMITTEE_DEPTH = getSyncCommitteeDepth();
-    var SYNC_COMMITTEE_INDEX = getSyncCommitteeIndex();
-    var G1_POINT_SIZE = getG1PointSize();
-    var P[K] = getBLS128381Prime();
+[[circuit]] void Rotate() {
+    std::size_t N = NUM_BITS_PER_REGISTER;
+    std::size_t K = NUM_REGISTERS;
+    std::array<std::size_t, 7> P[K] = BLS128381_PRIME;
 
     /* Sync Commmittee */
     signal input pubkeysBytes[SYNC_COMMITTEE_SIZE][G1_POINT_SIZE];
@@ -139,7 +134,7 @@ void Rotate()() {
     }
 
     /* VERIFY THE SSZ ROOT OF THE SYNC COMMITTEE */
-    component sszSyncCommittee = SSZPhase0SyncCommittee(SYNC_COMMITTEE_SIZE, LOG_2_SYNC_COMMITTEE_SIZE, G1_POINT_SIZE);
+    component sszSyncCommittee = SSZPhase0SyncCommittee(SYNC_COMMITTEE_SIZE, LOG2_SYNC_COMMITTEE_SIZE, G1_POINT_SIZE);
     for (int i = 0; i < SYNC_COMMITTEE_SIZE; i++) {
         for (var j = 0; j < 48; j++) {
             sszSyncCommittee.pubkeys[i][j] <= = pubkeysBytes[i][j];

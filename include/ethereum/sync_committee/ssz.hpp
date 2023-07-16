@@ -67,16 +67,20 @@ std::array<std::size_t, 32>
 SSZPhase0SyncCommittee(const std::array<std::array<std::size_t, SYNC_COMMITTEE_SIZE>, G1_POINT_SIZE> &pubkeys,
                        const std::array<std::size_t, G1_POINT_SIZE> &aggregatePubkey) {
 
-    component sszPubkeys = SSZArray(SYNC_COMMITTEE_SIZE * 64, LOG_2_SYNC_COMMITTEE_SIZE + 1);
+    std::array<std::size_t, 32> sszPubkeys;
+    std::array<std::size_t, SYNC_COMMITTEE_SIZE * 64> sszPubkeysIn;
+
     for (int i = 0; i < SYNC_COMMITTEE_SIZE; i++) {
         for (int j = 0; j < 64; j++) {
             if (j < G1_POINT_SIZE) {
-                sszPubkeys.in[i * 64 + j] <= = pubkeys[i][j];
+                sszPubkeysIn[i * 64 + j] = pubkeys[i][j];
             } else {
-                sszPubkeys.in[i * 64 + j] <= = 0;
+                sszPubkeysIn[i * 64 + j] = 0;
             }
         }
     }
+
+    sszPubkeys = SSZArray<SYNC_COMMITTEE_SIZE * 64, LOG_2_SYNC_COMMITTEE_SIZE + 1>(sszPubkeysIn);
 
     component sszAggregatePubkey = SSZArray(64, 1);
     for (int i = 0; i < 64; i++) {
@@ -147,15 +151,15 @@ std::array<std::size_t, 32> SSZPhase0SigningRoot(const std::array<std::size_t, 3
 template<std::size_t depth, std::size_t index>
 std::array<std::size_t, 32> SSZRestoreMerkleRoot(const std::array<std::size_t, 32> &leaf,
                                                  const std::array<std::array<std::size_t, depth>, 32> &branch) {
-    component hasher[depth];
+    std::array<std::size_t, 32> out;
+    std::array<std::uint8_t, 64> hashes_in;
+    std::array<typename hashes::sha2<256>::hash_type, depth> hashes;
 
-    var firstOffset;
-    var secondOffset;
+    std::size_t firstOffset;
+    std::size_t secondOffset;
 
     for (int i = 0; i < depth; i++) {
-        hasher[i] = Sha256Bytes(64);
-
-        if (index / (2 * *i) % 2 == 1) {
+        if (index / (std::pow(2, i)) % 2 == 1) {
             firstOffset = 0;
             secondOffset = 32;
         } else {
@@ -163,20 +167,24 @@ std::array<std::size_t, 32> SSZRestoreMerkleRoot(const std::array<std::size_t, 3
             secondOffset = 0;
         }
 
-        for (var j = 0; j < 32; j++) {
-            hasher[i].in[firstOffset + j] <= = branch[i][j];
+        for (int j = 0; j < 32; j++) {
+            hashes_in[firstOffset + j] = branch[i][j];
         }
+
+        hashes = crypto3::hash<hashes::sha2<256>>(hashes_in[i]);
 
         for (int j = 0; j < 32; j++) {
             if (i == 0) {
-                hasher[i].in[secondOffset + j] <= = leaf[j];
+                hashes_in[secondOffset + j] = leaf[j];
             } else {
-                hasher[i].in[secondOffset + j] <= = hasher[i - 1].out[j];
+                hashes_in[secondOffset + j] = hashes[i - 1][j];
             }
         }
     }
 
     for (int i = 0; i < 32; i++) {
-        out[i] <= = hasher[depth - 1].out[i];
+        out[i] = hashes[depth - 1][i];
     }
+
+    return out;
 }
