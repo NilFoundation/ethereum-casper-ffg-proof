@@ -139,7 +139,7 @@ std::array<std::size_t, 32> SSZPhase0SigningRoot(const std::array<std::size_t, 3
         sha256.in[i] <= = headerRoot[i];
     }
 
-    for (var i = 32; i < 64; i++) {
+    for (std::size_t i = 32; i < 64; i++) {
         sha256.in[i] <= = domain[i - 32];
     }
 

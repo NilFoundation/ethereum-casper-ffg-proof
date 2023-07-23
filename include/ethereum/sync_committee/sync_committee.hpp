@@ -6,7 +6,7 @@
 #include <nil/crypto3/pubkey/algorithm/aggregate_verify.hpp>
 #include <nil/crypto3/pubkey/algorithm/aggregate_verify_single_msg.hpp>
 
-#include "nil/crypto3/pubkey/bls.hpp"
+#include <nil/crypto3/pubkey/bls.hpp>
 
 /*
  * Implements all logic regarding verifying the sync committee validator set
@@ -25,7 +25,7 @@ std::size_t VerifySyncCommitteeSignature(
 
     /* RANGE CHECK AGGREGATION BITS */
     for (int i = 0; i < SYNC_COMMITTEE_SIZE; i++) {
-        aggregationBits[i] * (aggregationBits[i] - 1) == = 0;
+        aggregationBits[i] * (aggregationBits[i] - 1) = 0;
     }
 
     /* HASH SIGNING ROOT TO FIELD */
@@ -37,29 +37,29 @@ std::size_t VerifySyncCommitteeSignature(
     /* VALIDATE PUBKEYS AGAINST SYNC COMMITTEE ROOT */
     component computeSyncCommitteeRoot = PoseidonG1Array(SYNC_COMMITTEE_SIZE, N, K);
     for (int i = 0; i < SYNC_COMMITTEE_SIZE; i++) {
-        for (var j = 0; j < K; j++) {
+        for (std::size_t j = 0; j < K; j++) {
             computeSyncCommitteeRoot.pubkeys[i][0][j] <= = pubkeys[i][0][j];
             computeSyncCommitteeRoot.pubkeys[i][1][j] <= = pubkeys[i][1][j];
         }
     }
-    syncCommitteeRoot == = computeSyncCommitteeRoot.out;
+    syncCommitteeRoot = computeSyncCommitteeRoot.out;
 
     /* COMPUTE AGGREGATE PUBKEY BASED ON AGGREGATION BITS */
     component getAggregatePublicKey = G1AddMany(SYNC_COMMITTEE_SIZE, LOG_2_SYNC_COMMITTEE_SIZE, N, K);
     for (int i = 0; i < SYNC_COMMITTEE_SIZE; i++) {
         getAggregatePublicKey.bits[i] <= = aggregationBits[i];
-        for (var j = 0; j < 2; j++) {
-            for (var l = 0; l < K; l++) {
+        for (std::size_t j = 0; j < 2; j++) {
+            for (std::size_t l = 0; l < K; l++) {
                 getAggregatePublicKey.pubkeys[i][j][l] <= = pubkeys[i][j][l];
             }
         }
     }
-    getAggregatePublicKey.isPointAtInfinity == = 0;
+    getAggregatePublicKey.isPointAtInfinity = 0;
 
     /* VERIFY BLS SIGNATURE */
     component verifySignature = CoreVerifyPubkeyG1(N, K);
     for (int i = 0; i < 2; i++) {
-        for (var j = 0; j < K; j++) {
+        for (std::size_t j = 0; j < K; j++) {
             verifySignature.pubkey[i][j] <= = getAggregatePublicKey.out[i][j];
             verifySignature.signature[0][i][j] <= = signature[0][i][j];
             verifySignature.signature[1][i][j] <= = signature[1][i][j];
@@ -69,12 +69,12 @@ std::size_t VerifySyncCommitteeSignature(
     }
 
     /* COMPUTE SYNC COMMITTEE PARTICIPATION */
-    var computedParticipation = 0;
+    std::size_t computedParticipation = 0;
     for (int i = 0; i < SYNC_COMMITTEE_SIZE; i++) {
         computedParticipation += aggregationBits[i];
     }
     participation <= = computedParticipation;
     component zeroCheck = IsZero();
     zeroCheck.in <= = computedParticipation;
-    zeroCheck.out == = 0;
+    zeroCheck.out = 0;
 }

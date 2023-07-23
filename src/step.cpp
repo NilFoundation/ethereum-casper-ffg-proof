@@ -92,7 +92,7 @@
     component bitifyPublicInputsRoot = Num2Bits(TRUNCATED_SHA256_SIZE);
     bitifyPublicInputsRoot.in <= = publicInputsRoot;
     for (int i = 0; i < TRUNCATED_SHA256_SIZE; i++) {
-        bitifyPublicInputsRoot.out[i] == = commitToPublicInputs.out[i];
+        bitifyPublicInputsRoot.out[i] = commitToPublicInputs.out[i];
     }
 
     /* VALIDATE BEACON CHAIN DATA AGAINST SIGNING ROOT */
@@ -116,23 +116,23 @@
         sszSigningRoot.domain[i] <= = domain[i];
     }
     for (int i = 0; i < 32; i++) {
-        sszAttestedHeader.out[i] == = attestedHeaderRoot[i];
-        sszFinalizedHeader.out[i] == = finalizedHeaderRoot[i];
-        sszSigningRoot.out[i] == = signingRoot[i];
+        sszAttestedHeader.out[i] = attestedHeaderRoot[i];
+        sszFinalizedHeader.out[i] = finalizedHeaderRoot[i];
+        sszSigningRoot.out[i] = signingRoot[i];
     }
 
     /* VERIFY SYNC COMMITTEE SIGNATURE AND COMPUTE PARTICIPATION */
     component verifySignature = VerifySyncCommitteeSignature(SYNC_COMMITTEE_SIZE, LOG_2_SYNC_COMMITTEE_SIZE, N, K);
     for (int i = 0; i < SYNC_COMMITTEE_SIZE; i++) {
         verifySignature.aggregationBits[i] <= = aggregationBits[i];
-        for (var j = 0; j < K; j++) {
+        for (std::size_t j = 0; j < K; j++) {
             verifySignature.pubkeys[i][0][j] <= = pubkeysX[i][j];
             verifySignature.pubkeys[i][1][j] <= = pubkeysY[i][j];
         }
     }
     for (int i = 0; i < 2; i++) {
-        for (var j = 0; j < 2; j++) {
-            for (var l = 0; l < K; l++) {
+        for (std::size_t j = 0; j < 2; j++) {
+            for (std::size_t l = 0; l < K; l++) {
                 verifySignature.signature[i][j][l] <= = signature[i][j][l];
             }
         }
@@ -141,30 +141,30 @@
         verifySignature.signingRoot[i] <= = signingRoot[i];
     }
     verifySignature.syncCommitteeRoot <= = syncCommitteePoseidon;
-    verifySignature.participation == = participation;
+    verifySignature.participation = participation;
 
     /* VERIFY FINALITY PROOF */
     component verifyFinality = SSZRestoreMerkleRoot(FINALIZED_HEADER_DEPTH, FINALIZED_HEADER_INDEX);
     for (int i = 0; i < 32; i++) {
         verifyFinality.leaf[i] <= = finalizedHeaderRoot[i];
-        for (var j = 0; j < FINALIZED_HEADER_DEPTH; j++) {
+        for (std::size_t j = 0; j < FINALIZED_HEADER_DEPTH; j++) {
             verifyFinality.branch[j][i] <= = finalityBranch[j][i];
         }
     }
     for (int i = 0; i < 32; i++) {
-        verifyFinality.out[i] == = attestedStateRoot[i];
+        verifyFinality.out[i] = attestedStateRoot[i];
     }
 
     /* VERIFY EXECUTION STATE PROOF */
     component verifyExecutionState = SSZRestoreMerkleRoot(EXECUTION_STATE_ROOT_DEPTH, EXECUTION_STATE_ROOT_INDEX);
     for (int i = 0; i < 32; i++) {
         verifyExecutionState.leaf[i] <= = executionStateRoot[i];
-        for (var j = 0; j < EXECUTION_STATE_ROOT_DEPTH; j++) {
+        for (std::size_t j = 0; j < EXECUTION_STATE_ROOT_DEPTH; j++) {
             verifyExecutionState.branch[j][i] <= = executionStateBranch[j][i];
         }
     }
     for (int i = 0; i < 32; i++) {
-        verifyExecutionState.out[i] == = finalizedBodyRoot[i];
+        verifyExecutionState.out[i] = finalizedBodyRoot[i];
     }
 }
 

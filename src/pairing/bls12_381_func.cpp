@@ -5,7 +5,7 @@ function get_BLS12_381_parameter() {
 }
 
 function get_BLS12_381_prime(n, k) {
-    var p[50];
+    std::size_t p[50];
     assert((n == 96 && k == 4) || (n == 77 && k == 5) || (n == 55 && k == 7));
     if (n == 96 && k == 4) {
         p = [
@@ -31,8 +31,8 @@ function get_BLS12_381_prime(n, k) {
 // half of 8th roots of unity, up to negation
 function get_roots_of_unity(n, k) {
     assert(n == 55 && k == 7);
-    var roots[4][2][50];
-    for (var idx = 0; idx < k; idx++) {
+    std::size_t roots[4][2][50];
+    for (std::size_t idx = 0; idx < k; idx++) {
         roots[0][0][idx] = 0;
         roots[0][1][idx] = 0;
         roots[1][0][idx] = 0;
@@ -64,8 +64,8 @@ function get_roots_of_unity(n, k) {
 
 function get_etas(n, k) {
     assert(n == 55 && k == 7);
-    var p[50] = get_BLS12_381_prime(n, k);
-    var etas[4][2][50];
+    std::size_t p[50] = get_BLS12_381_prime(n, k);
+    std::size_t etas[4][2][50];
 
     if (n == 55 && k == 7) {
         etas[0][0] = [
@@ -97,7 +97,7 @@ function get_etas(n, k) {
 // https://cfrg.github.io/draft-irtf-cfrg-hash-to-curve/draft-irtf-cfrg-hash-to-curve.html#appendix-E.3
 function get_iso3_coeffs(n, k) {
     assert(n == 55 && k == 7);
-    var coeffs[4][4][2][50];
+    std::size_t coeffs[4][4][2][50];
     if (n == 55 && k == 7) {
         coeffs[0][0][0] = [
             15950248680265686, 32024958503631044, 4244301805875352, 29783714120969249, 35703698803053471,
@@ -191,7 +191,7 @@ function get_iso3_coeffs(n, k) {
 
 function get_generator_G1(n, k) {
     assert(n == 55 && k == 7);
-    var g1[2][50];
+    std::size_t g1[2][50];
 
     g1[0] = [
         16589478066046651, 22658679592837110, 35004527604248919, 16789302793630161, 7530538873701625, 32234187716135413,
@@ -207,7 +207,7 @@ function get_generator_G1(n, k) {
 
 function get_generator_G2(n, k) {
     assert(n == 55 && k == 7);
-    var g2[2][2][50];
+    std::size_t g2[2][2][50];
 
     g2[0][0] = [
         95420233661880, 1773856045391785, 5044075188989616, 23082975677810779, 22805092780977487, 23121359448368568,
@@ -231,7 +231,7 @@ function get_generator_G2(n, k) {
 
 function get_Fp12_frobenius(n, k) {
     assert((n == 96 && k == 4) || (n == 77 && k == 5) || (n == 55 && k == 7));
-    var coeff[12][6][2][20];    //
+    std::size_t coeff[12][6][2][20];    //
     // coeff[j][i] represents an element in F_q^2
     // F_q^12 = F_q^2[w] / (w^6 - (u+1))
     // Apply Frobenius j times to w^i: (w^i)^(q^j) = coeff[j][i] * w^i

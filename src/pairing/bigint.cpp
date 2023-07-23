@@ -27,7 +27,7 @@ template BigIsEqual(k) {
     signal output out;
 
     component isEquals[k];
-    var total = k;
+    std::size_t total = k;
     for (int i = 0; i < k; i++) {
         isEquals[i] = IsEqual();
         isEquals[i].in[0] <= = a[i];
@@ -45,7 +45,7 @@ template BigIsZero(k) {
     signal output out;
 
     component isZeros[k];
-    var total = k;
+    std::size_t total = k;
     for (int i = 0; i < k; i++) {
         isZeros[i] = IsZero();
         isZeros[i].in <= = in[i];
@@ -116,7 +116,7 @@ template ModProd(n) {
 
     component b2n1 = Bits2Num(n);
     component b2n2 = Bits2Num(n);
-    var i;
+    std::size_t i;
     for (i = 0; i < n; i++) {
         b2n1.in[i] <= = n2b.out[i];
         b2n2.in[i] <= = n2b.out[i + n];
@@ -141,7 +141,7 @@ template Split(n, m) {
     component n2b_big = Num2Bits(m);
     n2b_big.in <= = big;
 
-    in == = small + big * (1 << n);
+    in = small + big * (1 << n);
 }
 
 // split a n + m + k bit input into three outputs
@@ -164,7 +164,7 @@ template SplitThree(n, m, k) {
     component n2b_big = Num2Bits(k);
     n2b_big.in <= = big;
 
-    in == = small + medium * (1 << n) + big * (1 << n + m);
+    in = small + medium * (1 << n) + big * (1 << n + m);
 }
 
 // a[i], b[i] in 0... 2**n-1
@@ -181,7 +181,7 @@ template BigAdd(n, k) {
     out[0] <= = unit0.sum;
 
     component unit[k - 1];
-    for (var i = 1; i < k; i++) {
+    for (std::size_t i = 1; i < k; i++) {
         unit[i - 1] = ModSumThree(n);
         unit[i - 1].a <= = a[i];
         unit[i - 1].b <= = b[i];
@@ -216,45 +216,45 @@ template BigMultShortLong(n, k, m_out) {
     signal input b[k];
     signal output out[2 * k - 1];
 
-    var prod_val[2 * k - 1];
+    std::size_t prod_val[2 * k - 1];
     for (int i = 0; i < 2 * k - 1; i++) {
         prod_val[i] = 0;
         if (i < k) {
-            for (var a_idx = 0; a_idx <= i; a_idx++) {
+            for (std::size_t a_idx = 0; a_idx <= i; a_idx++) {
                 prod_val[i] = prod_val[i] + a[a_idx] * b[i - a_idx];
             }
         } else {
-            for (var a_idx = i - k + 1; a_idx < k; a_idx++) {
+            for (std::size_t a_idx = i - k + 1; a_idx < k; a_idx++) {
                 prod_val[i] = prod_val[i] + a[a_idx] * b[i - a_idx];
             }
         }
         out[i] < --prod_val[i];
     }
 
-    var k2 = 2 * k - 1;
-    var pow[k2][k2];    // we cache the exponent values because it makes a big difference in witness generation time
+    std::size_t k2 = 2 * k - 1;
+    std::size_t pow[k2][k2];    // we cache the exponent values because it makes a big difference in witness generation time
     for (int i = 0; i < k2; i++)
-        for (var j = 0; j < k2; j++)
+        for (std::size_t j = 0; j < k2; j++)
             pow[i][j] = i * *j;
 
-    var a_poly[2 * k - 1];
-    var b_poly[2 * k - 1];
-    var out_poly[2 * k - 1];
+    std::size_t a_poly[2 * k - 1];
+    std::size_t b_poly[2 * k - 1];
+    std::size_t out_poly[2 * k - 1];
     for (int i = 0; i < 2 * k - 1; i++) {
         out_poly[i] = 0;
         a_poly[i] = 0;
         b_poly[i] = 0;
-        for (var j = 0; j < 2 * k - 1; j++) {
+        for (std::size_t j = 0; j < 2 * k - 1; j++) {
             out_poly[i] = out_poly[i] + out[j] * pow[i][j];
         }
-        for (var j = 0; j < k; j++) {
+        for (std::size_t j = 0; j < k; j++) {
             a_poly[i] = a_poly[i] + a[j] * pow[i][j];
             b_poly[i] = b_poly[i] + b[j] * pow[i][j];
         }
     }
 
     for (int i = 0; i < 2 * k - 1; i++) {
-        out_poly[i] == = a_poly[i] * b_poly[i];
+        out_poly[i] = a_poly[i] * b_poly[i];
     }
 }
 
@@ -268,12 +268,12 @@ template BigMultShortLongUnequal(n, ka, kb, m_out) {
     signal input b[kb];
     signal output out[ka + kb - 1];
 
-    var prod_val[ka + kb - 1];
+    std::size_t prod_val[ka + kb - 1];
     for (int i = 0; i < ka + kb - 1; i++) {
         prod_val[i] = 0;
     }
     for (int i = 0; i < ka; i++) {
-        for (var j = 0; j < kb; j++) {
+        for (std::size_t j = 0; j < kb; j++) {
             prod_val[i + j] = prod_val[i + j] + a[i] * b[j];
         }
     }
@@ -281,31 +281,31 @@ template BigMultShortLongUnequal(n, ka, kb, m_out) {
         out[i] < --prod_val[i];
     }
 
-    var k2 = ka + kb - 1;
-    var pow[k2][k2];
+    std::size_t k2 = ka + kb - 1;
+    std::size_t pow[k2][k2];
     for (int i = 0; i < k2; i++)
-        for (var j = 0; j < k2; j++)
+        for (std::size_t j = 0; j < k2; j++)
             pow[i][j] = i * *j;
 
-    var a_poly[ka + kb - 1];
-    var b_poly[ka + kb - 1];
-    var out_poly[ka + kb - 1];
+    std::size_t a_poly[ka + kb - 1];
+    std::size_t b_poly[ka + kb - 1];
+    std::size_t out_poly[ka + kb - 1];
     for (int i = 0; i < ka + kb - 1; i++) {
         out_poly[i] = 0;
         a_poly[i] = 0;
         b_poly[i] = 0;
-        for (var j = 0; j < ka + kb - 1; j++) {
+        for (std::size_t j = 0; j < ka + kb - 1; j++) {
             out_poly[i] = out_poly[i] + out[j] * pow[i][j];
         }
-        for (var j = 0; j < ka; j++) {
+        for (std::size_t j = 0; j < ka; j++) {
             a_poly[i] = a_poly[i] + a[j] * pow[i][j];
         }
-        for (var j = 0; j < kb; j++) {
+        for (std::size_t j = 0; j < kb; j++) {
             b_poly[i] = b_poly[i] + b[j] * pow[i][j];
         }
     }
     for (int i = 0; i < ka + kb - 1; i++) {
-        out_poly[i] == = a_poly[i] * b_poly[i];
+        out_poly[i] = a_poly[i] * b_poly[i];
     }
 }
 
@@ -317,22 +317,22 @@ template LongToShortNoEndCarry(n, k) {
     signal input in[k];
     signal output out[k + 1];
 
-    var split[k][3];
+    std::size_t split[k][3];
     for (int i = 0; i < k; i++) {
         split[i] = SplitThreeFn(in[i], n, n, n);
     }
 
-    var carry[k];
+    std::size_t carry[k];
     carry[0] = 0;
     out[0] < --split[0][0];
     if (k > 1) {
-        var sumAndCarry[2] = SplitFn(split[0][1] + split[1][0], n, n);
+        std::size_t sumAndCarry[2] = SplitFn(split[0][1] + split[1][0], n, n);
         out[1] < --sumAndCarry[0];
         carry[1] = sumAndCarry[1];
     }
     if (k > 2) {
-        for (var i = 2; i < k; i++) {
-            var sumAndCarry[2] = SplitFn(split[i][0] + split[i - 1][1] + split[i - 2][2] + carry[i - 1], n, n);
+        for (std::size_t i = 2; i < k; i++) {
+            std::size_t sumAndCarry[2] = SplitFn(split[i][0] + split[i - 1][1] + split[i - 2][2] + carry[i - 1], n, n);
             out[i] < --sumAndCarry[0];
             carry[i] = sumAndCarry[1];
         }
@@ -350,14 +350,14 @@ template LongToShortNoEndCarry(n, k) {
     runningCarry[0] < --(in[0] - out[0]) / (1 << n);
     runningCarryRangeChecks[0] = Num2Bits(n + log_ceil(k));
     runningCarryRangeChecks[0].in <= = runningCarry[0];
-    runningCarry[0] * (1 << n) == = in[0] - out[0];
-    for (var i = 1; i < k; i++) {
+    runningCarry[0] * (1 << n) = in[0] - out[0];
+    for (std::size_t i = 1; i < k; i++) {
         runningCarry[i] < --(in[i] - out[i] + runningCarry[i - 1]) / (1 << n);
         runningCarryRangeChecks[i] = Num2Bits(n + log_ceil(k));
         runningCarryRangeChecks[i].in <= = runningCarry[i];
-        runningCarry[i] * (1 << n) == = in[i] - out[i] + runningCarry[i - 1];
+        runningCarry[i] * (1 << n) = in[i] - out[i] + runningCarry[i - 1];
     }
-    runningCarry[k - 1] == = out[k];
+    runningCarry[k - 1] = out[k];
 }
 
 template BigMult(n, k) {
@@ -366,7 +366,7 @@ template BigMult(n, k) {
     signal input b[k];
     signal output out[2 * k];
 
-    var LOGK = log_ceil(k);
+    std::size_t LOGK = log_ceil(k);
     component mult = BigMultShortLong(n, k, 2 * n + LOGK);
     for (int i = 0; i < k; i++) {
         mult.a[i] <= = a[i];
@@ -411,7 +411,7 @@ template BigLessThan(n, k) {
     component ors[k - 1];
     component ands[k - 1];
     component eq_ands[k - 1];
-    for (var i = k - 2; i >= 0; i--) {
+    for (std::size_t i = k - 2; i >= 0; i--) {
         ands[i] = AND();
         eq_ands[i] = AND();
         ors[i] = OR();
@@ -445,7 +445,7 @@ template BigMod(n, k) {
     signal output div[k + 1];
     signal output mod[k];
 
-    var longdiv[2][50] = long_div(n, k, a, b);
+    std::size_t longdiv[2][50] = long_div(n, k, a, b);
     for (int i = 0; i < k; i++) {
         div[i] < --longdiv[0][i];
         mod[i] < --longdiv[1][i];
@@ -493,17 +493,17 @@ template BigMod(n, k) {
     }
 
     for (int i = 0; i < 2 * k; i++) {
-        add.out[i] == = a[i];
+        add.out[i] = a[i];
     }
-    add.out[2 * k] == = 0;
-    add.out[2 * k + 1] == = 0;
+    add.out[2 * k] = 0;
+    add.out[2 * k + 1] = 0;
 
     component lt = BigLessThan(n, k);
     for (int i = 0; i < k; i++) {
         lt.a[i] <= = mod[i];
         lt.b[i] <= = b[i];
     }
-    lt.out == = 1;
+    lt.out = 1;
 }
 
 // copied from BigMod to allow a to have m registers and use long_div2
@@ -516,7 +516,7 @@ template BigMod2(n, k, m) {
     signal output div[m - k + 1];
     signal output mod[k];
 
-    var longdiv[2][50] = long_div2(n, k, m - k, a, b);
+    std::size_t longdiv[2][50] = long_div2(n, k, m - k, a, b);
     for (int i = 0; i < k; i++) {
         mod[i] < --longdiv[1][i];
     }
@@ -540,14 +540,14 @@ template BigMod2(n, k, m) {
         mul.a[i] <= = div[i];
         mul.b[i] <= = b[i];
     }
-    for (var i = k; i <= m - k; i++) {
+    for (std::size_t i = k; i <= m - k; i++) {
         mul.a[i] <= = div[i];
         mul.b[i] <= = 0;
     }
 
     // mul shouldn't have more registers than a
-    for (var i = m; i < 2 * (m - k) + 2; i++) {
-        mul.out[i] == = 0;
+    for (std::size_t i = m; i < 2 * (m - k) + 2; i++) {
+        mul.out[i] = 0;
     }
 
     component add = BigAdd(n, m);
@@ -561,16 +561,16 @@ template BigMod2(n, k, m) {
     }
 
     for (int i = 0; i < m; i++) {
-        add.out[i] == = a[i];
+        add.out[i] = a[i];
     }
-    add.out[m] == = 0;
+    add.out[m] = 0;
 
     component lt = BigLessThan(n, k);
     for (int i = 0; i < k; i++) {
         lt.a[i] <= = mod[i];
         lt.b[i] <= = b[i];
     }
-    lt.out == = 1;
+    lt.out = 1;
 }
 
 // a[i], b[i] in 0... 2**n-1
@@ -604,7 +604,7 @@ template BigAddModP(n, k) {
     sub.a[k] <= = add.out[k];
     sub.b[k] <= = 0;
 
-    sub.out[k] == = 0;
+    sub.out[k] = 0;
     for (int i = 0; i < k; i++) {
         out[i] <= = sub.out[i];
     }
@@ -631,7 +631,7 @@ template BigSub(n, k) {
     out[0] <= = unit0.out;
 
     component unit[k - 1];
-    for (var i = 1; i < k; i++) {
+    for (std::size_t i = 1; i < k; i++) {
         unit[i - 1] = ModSubThree(n);
         unit[i - 1].a <= = a[i];
         unit[i - 1].b <= = b[i];
@@ -705,7 +705,7 @@ template BigModInv(n, k) {
     signal output out[k];
 
     // length k
-    var inv[50] = mod_inv(n, k, in, p);
+    std::size_t inv[50] = mod_inv(n, k, in, p);
     for (int i = 0; i < k; i++) {
         out[i] < --inv[i];
     }
@@ -727,9 +727,9 @@ template BigModInv(n, k) {
     for (int i = 0; i < k; i++) {
         mod.b[i] <= = p[i];
     }
-    mod.mod[0] == = 1;
-    for (var i = 1; i < k; i++) {
-        mod.mod[i] == = 0;
+    mod.mod[0] = 1;
+    for (std::size_t i = 1; i < k; i++) {
+        mod.mod[i] = 0;
     }
 }
 
@@ -743,7 +743,7 @@ Implements:
 template CheckCarryToZero(n, m, k) {
     assert(k >= 2);
 
-    var EPSILON = 1;    // see below for why 1 is ok
+    std::size_t EPSILON = 1;    // see below for why 1 is ok
 
     signal input in[k];
 
@@ -753,10 +753,10 @@ template CheckCarryToZero(n, m, k) {
         carryRangeChecks[i] = Num2Bits(m + EPSILON - n);
         if (i == 0) {
             carry[i] < --in[i] / (1 << n);
-            in[i] == = carry[i] * (1 << n);
+            in[i] = carry[i] * (1 << n);
         } else {
             carry[i] < --(in[i] + carry[i - 1]) / (1 << n);
-            in[i] + carry[i - 1] == = carry[i] * (1 << n);
+            in[i] + carry[i - 1] = carry[i] * (1 << n);
         }
         // checking carry is in the range of -2^(m-n-1+eps), 2^(m-n-1+eps)
         carryRangeChecks[i].in <= = carry[i] + (1 << (m + EPSILON - n - 1));
@@ -764,7 +764,7 @@ template CheckCarryToZero(n, m, k) {
         // geometric series
     }
 
-    in[k - 1] + carry[k - 2] == = 0;
+    in[k - 1] + carry[k - 2] = 0;
 }
 
 /*
@@ -788,21 +788,21 @@ template PrimeReduce(n, k, m, p, m_out) {
     signal input in[m + k];
     signal output out[k];
 
-    var two[k];
-    var e[k];
-    for (var i = 1; i < k; i++) {
+    std::size_t two[k];
+    std::size_t e[k];
+    for (std::size_t i = 1; i < k; i++) {
         two[i] = 0;
         e[i] = 0;
     }
     two[0] = 2;
 
     e[0] = n;
-    var pow2n[50] = mod_exp(n, k, two, p, e);
+    std::size_t pow2n[50] = mod_exp(n, k, two, p, e);
     e[0] = k;
     assert(k < (1 << n));
-    var pow2nk[50] = mod_exp(n, k, pow2n, p, e);
+    std::size_t pow2nk[50] = mod_exp(n, k, pow2n, p, e);
 
-    var r[m][50];
+    std::size_t r[m][50];
     for (int i = 0; i < m; i++) {
         // r[i] = 2^{n(k+i)} mod p
         if (i == 0) {
@@ -811,11 +811,11 @@ template PrimeReduce(n, k, m, p, m_out) {
             r[i] = prod_mod(n, k, r[i - 1], pow2n, p);
         }
     }
-    var out_sum[k];
+    std::size_t out_sum[k];
     for (int i = 0; i < k; i++)
         out_sum[i] = in[i];
     for (int i = 0; i < m; i++)
-        for (var j = 0; j < k; j++)
+        for (std::size_t j = 0; j < k; j++)
             out_sum[j] += in[i + k] * r[i][j];    // linear constraint
     for (int i = 0; i < k; i++)
         out[i] <= = out_sum[i];
@@ -844,19 +844,19 @@ template BigMultShortLong2D(n, k, l) {
     signal input b[l][k];
     signal output out[2 * l - 1][2 * k - 1];
 
-    var prod_val[2 * l - 1][2 * k - 1];
+    std::size_t prod_val[2 * l - 1][2 * k - 1];
     for (int i = 0; i < 2 * l - 1; i++) {
-        for (var j = 0; j < 2 * k - 1; j++) {
+        for (std::size_t j = 0; j < 2 * k - 1; j++) {
             prod_val[i][j] = 0;
         }
     }
 
-    for (var i1 = 0; i1 < l; i1++) {
-        for (var i2 = 0; i2 < l; i2++) {
-            for (var j1 = 0; j1 < k; j1++) {
-                for (var j2 = 0; j2 < k; j2++) {
-                    var i = i1 + i2;
-                    var j = j1 + j2;
+    for (std::size_t i1 = 0; i1 < l; i1++) {
+        for (std::size_t i2 = 0; i2 < l; i2++) {
+            for (std::size_t j1 = 0; j1 < k; j1++) {
+                for (std::size_t j2 = 0; j2 < k; j2++) {
+                    std::size_t i = i1 + i2;
+                    std::size_t j = j1 + j2;
                     prod_val[i][j] += a[i1][j1] * b[i2][j2];
                 }
             }
@@ -864,35 +864,35 @@ template BigMultShortLong2D(n, k, l) {
     }
 
     for (int i = 0; i < 2 * l - 1; i++) {
-        for (var j = 0; j < 2 * k - 1; j++) {
+        for (std::size_t j = 0; j < 2 * k - 1; j++) {
             out[i][j] < --prod_val[i][j];
         }
     }
 
-    var k2 = (2 * k - 1 > 2 * l - 1) ? 2 * k - 1 : 2 * l - 1;
-    var pow[k2][k2];
+    std::size_t k2 = (2 * k - 1 > 2 * l - 1) ? 2 * k - 1 : 2 * l - 1;
+    std::size_t pow[k2][k2];
     for (int i = 0; i < k2; i++)
-        for (var j = 0; j < k2; j++)
+        for (std::size_t j = 0; j < k2; j++)
             pow[i][j] = i * *j;
 
-    var a_poly[2 * l - 1][2 * k - 1];
-    var b_poly[2 * l - 1][2 * k - 1];
-    var out_poly[2 * l - 1][2 * k - 1];
+    std::size_t a_poly[2 * l - 1][2 * k - 1];
+    std::size_t b_poly[2 * l - 1][2 * k - 1];
+    std::size_t out_poly[2 * l - 1][2 * k - 1];
     for (int i = 0; i < 2 * l - 1; i++) {
-        for (var j = 0; j < 2 * k - 1; j++) {
+        for (std::size_t j = 0; j < 2 * k - 1; j++) {
             a_poly[i][j] = 0;
             b_poly[i][j] = 0;
             out_poly[i][j] = 0;
-            for (var deg1 = 0; deg1 < l; deg1++) {
-                for (var deg2 = 0; deg2 < k; deg2++) {
+            for (std::size_t deg1 = 0; deg1 < l; deg1++) {
+                for (std::size_t deg2 = 0; deg2 < k; deg2++) {
                     a_poly[i][j] =
                         a_poly[i][j] + a[deg1][deg2] * pow[i][deg1] * pow[j][deg2];    // (i ** deg1) * (j ** deg2);
                     b_poly[i][j] =
                         b_poly[i][j] + b[deg1][deg2] * pow[i][deg1] * pow[j][deg2];    // (i ** deg1) * (j ** deg2);
                 }
             }
-            for (var deg1 = 0; deg1 < 2 * l - 1; deg1++) {
-                for (var deg2 = 0; deg2 < 2 * k - 1; deg2++) {
+            for (std::size_t deg1 = 0; deg1 < 2 * l - 1; deg1++) {
+                for (std::size_t deg2 = 0; deg2 < 2 * k - 1; deg2++) {
                     out_poly[i][j] =
                         out_poly[i][j] + out[deg1][deg2] * pow[i][deg1] * pow[j][deg2];    // (i ** deg1) * (j ** deg2);
                 }
@@ -901,8 +901,8 @@ template BigMultShortLong2D(n, k, l) {
     }
 
     for (int i = 0; i < 2 * l - 1; i++) {
-        for (var j = 0; j < 2 * k - 1; j++) {
-            out_poly[i][j] == = a_poly[i][j] * b_poly[i][j];
+        for (std::size_t j = 0; j < 2 * k - 1; j++) {
+            out_poly[i][j] = a_poly[i][j] * b_poly[i][j];
         }
     }
 }
@@ -917,19 +917,19 @@ template BigMultShortLong2DUnequal(n, ka, kb, la, lb) {
     signal input b[lb][kb];
     signal output out[la + lb - 1][ka + kb - 1];
 
-    var prod_val[la + lb - 1][ka + kb - 1];
+    std::size_t prod_val[la + lb - 1][ka + kb - 1];
     for (int i = 0; i < la + lb - 1; i++) {
-        for (var j = 0; j < ka + kb - 1; j++) {
+        for (std::size_t j = 0; j < ka + kb - 1; j++) {
             prod_val[i][j] = 0;
         }
     }
 
-    for (var i1 = 0; i1 < la; i1++) {
-        for (var i2 = 0; i2 < lb; i2++) {
-            for (var j1 = 0; j1 < ka; j1++) {
-                for (var j2 = 0; j2 < kb; j2++) {
-                    var i = i1 + i2;
-                    var j = j1 + j2;
+    for (std::size_t i1 = 0; i1 < la; i1++) {
+        for (std::size_t i2 = 0; i2 < lb; i2++) {
+            for (std::size_t j1 = 0; j1 < ka; j1++) {
+                for (std::size_t j2 = 0; j2 < kb; j2++) {
+                    std::size_t i = i1 + i2;
+                    std::size_t j = j1 + j2;
                     prod_val[i][j] += a[i1][j1] * b[i2][j2];
                 }
             }
@@ -937,39 +937,39 @@ template BigMultShortLong2DUnequal(n, ka, kb, la, lb) {
     }
 
     for (int i = 0; i < la + lb - 1; i++) {
-        for (var j = 0; j < ka + kb - 1; j++) {
+        for (std::size_t j = 0; j < ka + kb - 1; j++) {
             out[i][j] < --prod_val[i][j];
         }
     }
 
-    var k2 = (ka + kb - 1 > la + lb - 1) ? ka + kb - 1 : la + lb - 1;
-    var pow[k2][k2];
+    std::size_t k2 = (ka + kb - 1 > la + lb - 1) ? ka + kb - 1 : la + lb - 1;
+    std::size_t pow[k2][k2];
     for (int i = 0; i < k2; i++)
-        for (var j = 0; j < k2; j++)
+        for (std::size_t j = 0; j < k2; j++)
             pow[i][j] = i * *j;
 
-    var a_poly[la + lb - 1][ka + kb - 1];
-    var b_poly[la + lb - 1][ka + kb - 1];
-    var out_poly[la + lb - 1][ka + kb - 1];
+    std::size_t a_poly[la + lb - 1][ka + kb - 1];
+    std::size_t b_poly[la + lb - 1][ka + kb - 1];
+    std::size_t out_poly[la + lb - 1][ka + kb - 1];
     for (int i = 0; i < la + lb - 1; i++) {
-        for (var j = 0; j < ka + kb - 1; j++) {
+        for (std::size_t j = 0; j < ka + kb - 1; j++) {
             a_poly[i][j] = 0;
             b_poly[i][j] = 0;
             out_poly[i][j] = 0;
-            for (var deg1 = 0; deg1 < la + lb - 1; deg1++) {
+            for (std::size_t deg1 = 0; deg1 < la + lb - 1; deg1++) {
                 if (deg1 < la) {
-                    for (var deg2 = 0; deg2 < ka; deg2++) {
+                    for (std::size_t deg2 = 0; deg2 < ka; deg2++) {
                         a_poly[i][j] =
                             a_poly[i][j] + a[deg1][deg2] * pow[i][deg1] * pow[j][deg2];    //(i ** deg1) * (j ** deg2);
                     }
                 }
                 if (deg1 < lb) {
-                    for (var deg2 = 0; deg2 < kb; deg2++) {
+                    for (std::size_t deg2 = 0; deg2 < kb; deg2++) {
                         b_poly[i][j] =
                             b_poly[i][j] + b[deg1][deg2] * pow[i][deg1] * pow[j][deg2];    // (i ** deg1) * (j ** deg2);
                     }
                 }
-                for (var deg2 = 0; deg2 < ka + kb - 1; deg2++) {
+                for (std::size_t deg2 = 0; deg2 < ka + kb - 1; deg2++) {
                     out_poly[i][j] =
                         out_poly[i][j] + out[deg1][deg2] * pow[i][deg1] * pow[j][deg2];    // (i ** deg1) * (j ** deg2);
                 }
@@ -978,8 +978,8 @@ template BigMultShortLong2DUnequal(n, ka, kb, la, lb) {
     }
 
     for (int i = 0; i < la + lb - 1; i++) {
-        for (var j = 0; j < ka + kb - 1; j++) {
-            out_poly[i][j] == = a_poly[i][j] * b_poly[i][j];
+        for (std::size_t j = 0; j < ka + kb - 1; j++) {
+            out_poly[i][j] = a_poly[i][j] * b_poly[i][j];
         }
     }
 }

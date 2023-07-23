@@ -74,14 +74,14 @@ template FpNegate(n, k, p){
 
     component neg = BigSub(n, k); 
     component is_zero = BigIsZero(k);
-    for(var idx=0; idx<k; idx++){
+    for(std::size_t idx=0; idx<k; idx++){
         neg.a[idx] <== p[idx];
         neg.b[idx] <== in[idx];
         
         is_zero.in[idx] <== in[idx];
     }
     neg.underflow === 0; // constrain in <= p
-    for(var idx=0; idx<k; idx++)
+    for(std::size_t idx=0; idx<k; idx++)
         out[idx] <== (1-is_zero.out)*neg.out[idx];
 }
 
@@ -91,7 +91,7 @@ template FpMultiply(n, k, p) {
     signal input b[k];
     signal output out[k];
 
-    var LOGK = log_ceil(k);
+    std::size_t LOGK = log_ceil(k);
 
     component nocarry = BigMultShortLong(n, k, 2*n + LOGK);
     for (int i = 0; i < k; i++) {
@@ -99,7 +99,7 @@ template FpMultiply(n, k, p) {
         nocarry.b[i] <== b[i];
     }
     component red = PrimeReduce(n, k, k-1, p, 3*n + 2*LOGK);
-    for(var i=0; i<2*k-1; i++)
+    for(std::size_t i=0; i<2*k-1; i++)
         red.in[i] <== nocarry.out[i];
 
     component big_mod = SignedFpCarryModP(n, k, 3*n + 2*LOGK, p);
@@ -126,17 +126,17 @@ template CheckCarryModP(n, k, m, overflow, p){
 
     pX = BigMultShortLongUnequal(n, k, m, overflow); // p has k registers, X has m registers, so output really has k+m-1 registers 
     // overflow register in  (-2^{overflow-1} , 2^{overflow-1})
-    for(var i=0; i<k; i++)
+    for(std::size_t i=0; i<k; i++)
         pX.a[i] <== p[i];
-    for(var i=0; i<m; i++)
+    for(std::size_t i=0; i<m; i++)
         pX.b[i] <== X[i];
 
     // in - p*X - Y has registers in (-2^{overflow+1}, 2^{overflow+1})
     carry_check = CheckCarryToZero(n, overflow+1, k+m-1 ); 
-    for(var i=0; i<k; i++){
+    for(std::size_t i=0; i<k; i++){
         carry_check.in[i] <== in[i] - pX.out[i] - Y[i]; 
     }
-    for(var i=k; i<k+m-1; i++)
+    for(std::size_t i=k; i<k+m-1; i++)
         carry_check.in[i] <== -pX.out[i];
 }
 
@@ -149,18 +149,18 @@ template CheckCarryModP(n, k, m, overflow, p){
 template SignedFpCarryModP(n, k, overflow, p){
     assert(k < 50);
     signal input in[k]; 
-    var m = (overflow + n - 1) \ n; 
+    std::size_t m = (overflow + n - 1) \ n;
     signal output X[m];
     signal output out[k];
 
     assert( overflow < 251 );
 
-    var Xvar[2][50] = get_signed_Fp_carry_witness(n, k, m, in, p); 
+    std::size_t Xvar[2][50] = get_signed_Fp_carry_witness(n, k, m, in, p);
     component X_range_checks[m];
     component range_checks[k]; 
     //component lt = BigLessThan(n, k); 
 
-    for(var i=0; i<k; i++){
+    for(std::size_t i=0; i<k; i++){
         out[i] <-- Xvar[1][i];
         range_checks[i] = Num2Bits(n); 
         range_checks[i].in <== out[i];
@@ -169,18 +169,18 @@ template SignedFpCarryModP(n, k, overflow, p){
     }
     //lt.out === 1;
     
-    for(var i=0; i<m; i++){
+    for(std::size_t i=0; i<m; i++){
         X[i] <-- Xvar[0][i];
         X_range_checks[i] = Num2Bits(n+1);
         X_range_checks[i].in <== X[i] + (1<<n); // X[i] should be between [-2^n, 2^n)
     }
     
     component mod_check = CheckCarryModP(n, k, m, overflow, p);
-    for(var i=0; i<k; i++){
+    for(std::size_t i=0; i<k; i++){
         mod_check.in[i] <== in[i];
         mod_check.Y[i] <== out[i];
     }
-    for(var i=0; i<m; i++){
+    for(std::size_t i=0; i<m; i++){
         mod_check.X[i] <== X[i];
     }
 }
@@ -196,27 +196,27 @@ template SignedFpCarryModP(n, k, overflow, p){
 template SignedCheckCarryModToZero(n, k, overflow, p){
     assert(k < 50);
     signal input in[k]; 
-    var m = (overflow + n - 1) \ n; 
+    std::size_t m = (overflow + n - 1) \ n;
     assert(m < 50);
     signal output X[m];
 
     assert( overflow < 251 );
 
-    var Xvar[2][50] = get_signed_Fp_carry_witness(n, k, m, in, p); 
+    std::size_t Xvar[2][50] = get_signed_Fp_carry_witness(n, k, m, in, p);
     component X_range_checks[m];
 
-    for(var i=0; i<m; i++){
+    for(std::size_t i=0; i<m; i++){
         X[i] <-- Xvar[0][i];
         X_range_checks[i] = Num2Bits(n+1);
         X_range_checks[i].in <== X[i] + (1<<n); // X[i] should be between [-2^n, 2^n)
     }
     
     component mod_check = CheckCarryModP(n, k, m, overflow, p);
-    for(var i=0; i<k; i++){
+    for(std::size_t i=0; i<k; i++){
         mod_check.in[i] <== in[i];
         mod_check.Y[i] <== 0;
     }
-    for(var i=0; i<m; i++){
+    for(std::size_t i=0; i<m; i++){
         mod_check.X[i] <== X[i];
     }
 }
@@ -232,15 +232,15 @@ template FpSgn0(n, k, p){
 
     // constrain in < p
     component lt = BigLessThan(n, k);
-    for(var i=0; i<k; i++){
+    for(std::size_t i=0; i<k; i++){
         lt.a[i] <== in[i];
         lt.b[i] <== p[i];
     }
     lt.out === 1;
     
     // note we only need in[0] ! 
-    var r = in[0] % 2;
-    var q = (in[0] - r) / 2; 
+    std::size_t r = in[0] % 2;
+    std::size_t q = (in[0] - r) / 2;
     out <-- r;
     signal div;
     div <-- q; 
@@ -255,7 +255,7 @@ template FpIsZero(n, k, p){
     // check that in < p 
     component lt = BigLessThan(n, k);
     component isZero = BigIsZero(k);
-    for(var i = 0; i < k; i++) {
+    for(std::size_t i = 0; i < k; i++) {
         lt.a[i] <== in[i];
         lt.b[i] <== p[i];
 
@@ -271,9 +271,9 @@ template FpIsEqual(n, k, p){
 
     // check in[i] < p
     component lt[2];
-    for(var i = 0; i < 2; i++){
+    for(std::size_t i = 0; i < 2; i++){
         lt[i] = BigLessThan(n, k);
-        for(var idx=0; idx<k; idx++){
+        for(std::size_t idx=0; idx<k; idx++){
             lt[i].a[idx] <== in[i][idx];
             lt[i].b[idx] <== p[idx];
         }
@@ -281,8 +281,8 @@ template FpIsEqual(n, k, p){
     }
 
     component isEqual[k+1];
-    var sum = 0;
-    for(var i = 0; i < k; i++){
+    std::size_t sum = 0;
+    for(std::size_t i = 0; i < k; i++){
         isEqual[i] = IsEqual();
         isEqual[i].in[0] <== in[0][i];
         isEqual[i].in[1] <== in[1][i];

@@ -58,19 +58,19 @@
         sszFinalizedHeader.bodyRoot[i] <= = finalizedBodyRoot[i];
     }
     for (int i = 0; i < 32; i++) {
-        sszFinalizedHeader.out[i] == = finalizedHeaderRoot[i];
+        sszFinalizedHeader.out[i] = finalizedHeaderRoot[i];
     }
 
     /* CHECK SYNC COMMITTEE SSZ PROOF */
     component verifySyncCommittee = SSZRestoreMerkleRoot(SYNC_COMMITTEE_DEPTH, SYNC_COMMITTEE_INDEX);
     for (int i = 0; i < 32; i++) {
         verifySyncCommittee.leaf[i] <= = syncCommitteeSSZ[i];
-        for (var j = 0; j < SYNC_COMMITTEE_DEPTH; j++) {
+        for (std::size_t j = 0; j < SYNC_COMMITTEE_DEPTH; j++) {
             verifySyncCommittee.branch[j][i] <= = syncCommitteeBranch[j][i];
         }
     }
     for (int i = 0; i < 32; i++) {
-        verifySyncCommittee.out[i] == = finalizedStateRoot[i];
+        verifySyncCommittee.out[i] = finalizedStateRoot[i];
     }
 
     /* VERIFY PUBKEY BIGINTS ARE NOT ILL-FORMED */
@@ -81,7 +81,7 @@
     for (int i = 0; i < SYNC_COMMITTEE_SIZE; i++) {
         pubkeyReducedChecksX[i] = BigLessThan(N, K);
         pubkeyReducedChecksY[i] = BigLessThan(N, K);
-        for (var j = 0; j < K; j++) {
+        for (std::size_t j = 0; j < K; j++) {
             pubkeyReducedChecksX[i].a[j] <= = pubkeysBigIntX[i][j];
             pubkeyReducedChecksX[i].b[j] <= = P[j];
             pubkeyReducedChecksY[i].a[j] <= = pubkeysBigIntY[i][j];
@@ -91,19 +91,19 @@
             pubkeyRangeChecksY[i][j] = Num2Bits(N);
             pubkeyRangeChecksY[i][j].in <= = pubkeysBigIntY[i][j];
         }
-        pubkeyReducedChecksX[i].out == = 1;
-        pubkeyReducedChecksY[i].out == = 1;
+        pubkeyReducedChecksX[i].out = 1;
+        pubkeyReducedChecksY[i].out = 1;
     }
 
     /* VERIFY BYTE AND BIG INT REPRESENTATION OF G1 POINTS MATCH */
     component g1BytesToBigInt[SYNC_COMMITTEE_SIZE];
     for (int i = 0; i < SYNC_COMMITTEE_SIZE; i++) {
         g1BytesToBigInt[i] = G1BytesToBigInt(N, K, G1_POINT_SIZE);
-        for (var j = 0; j < 48; j++) {
+        for (std::size_t j = 0; j < 48; j++) {
             g1BytesToBigInt[i].in[j] <= = pubkeysBytes[i][j];
         }
-        for (var j = 0; j < K; j++) {
-            g1BytesToBigInt[i].out[j] == = pubkeysBigIntX[i][j];
+        for (std::size_t j = 0; j < K; j++) {
+            g1BytesToBigInt[i].out[j] = pubkeysBigIntX[i][j];
         }
     }
 
@@ -112,7 +112,7 @@
     component verifyPointOnCurve[SYNC_COMMITTEE_SIZE];
     for (int i = 0; i < SYNC_COMMITTEE_SIZE; i++) {
         verifyPointOnCurve[i] = PointOnBLSCurveNoCheck(N, K);
-        for (var j = 0; j < K; j++) {
+        for (std::size_t j = 0; j < K; j++) {
             verifyPointOnCurve[i].in[0][j] <= = pubkeysBigIntX[i][j];
             verifyPointOnCurve[i].in[1][j] <= = pubkeysBigIntY[i][j];
         }
@@ -124,19 +124,19 @@
     for (int i = 0; i < SYNC_COMMITTEE_SIZE; i++) {
         bytesToSignFlag[i] = G1BytesToSignFlag(N, K, G1_POINT_SIZE);
         bigIntToSignFlag[i] = G1BigIntToSignFlag(N, K);
-        for (var j = 0; j < G1_POINT_SIZE; j++) {
+        for (std::size_t j = 0; j < G1_POINT_SIZE; j++) {
             bytesToSignFlag[i].in[j] <= = pubkeysBytes[i][j];
         }
-        for (var j = 0; j < K; j++) {
+        for (std::size_t j = 0; j < K; j++) {
             bigIntToSignFlag[i].in[j] <= = pubkeysBigIntY[i][j];
         }
-        bytesToSignFlag[i].out == = bigIntToSignFlag[i].out;
+        bytesToSignFlag[i].out = bigIntToSignFlag[i].out;
     }
 
     /* VERIFY THE SSZ ROOT OF THE SYNC COMMITTEE */
     component sszSyncCommittee = SSZPhase0SyncCommittee(SYNC_COMMITTEE_SIZE, LOG2_SYNC_COMMITTEE_SIZE, G1_POINT_SIZE);
     for (int i = 0; i < SYNC_COMMITTEE_SIZE; i++) {
-        for (var j = 0; j < 48; j++) {
+        for (std::size_t j = 0; j < 48; j++) {
             sszSyncCommittee.pubkeys[i][j] <= = pubkeysBytes[i][j];
         }
     }
@@ -144,18 +144,18 @@
         sszSyncCommittee.aggregatePubkey[i] <= = aggregatePubkeyBytesX[i];
     }
     for (int i = 0; i < 32; i++) {
-        syncCommitteeSSZ[i] == = sszSyncCommittee.out[i];
+        syncCommitteeSSZ[i] = sszSyncCommittee.out[i];
     }
 
     /* VERIFY THE POSEIDON ROOT OF THE SYNC COMMITTEE */
     component computePoseidonRoot = PoseidonG1Array(SYNC_COMMITTEE_SIZE, N, K);
     for (int i = 0; i < SYNC_COMMITTEE_SIZE; i++) {
-        for (var j = 0; j < K; j++) {
+        for (std::size_t j = 0; j < K; j++) {
             computePoseidonRoot.pubkeys[i][0][j] <= = pubkeysBigIntX[i][j];
             computePoseidonRoot.pubkeys[i][1][j] <= = pubkeysBigIntY[i][j];
         }
     }
-    syncCommitteePoseidon == = computePoseidonRoot.out;
+    syncCommitteePoseidon = computePoseidonRoot.out;
 }
 
 component main {public[finalizedHeaderRoot, syncCommitteePoseidon, syncCommitteeSSZ]} = Rotate();

@@ -46,7 +46,7 @@ std::array<std::size_t, TRUNCATED_SHA256_SIZE> CommitToPublicInputsForStep(
     component byteify0[32];
     for (int i = 0; i < 32; i++) {
         byteify0[i] = Bits2Num(8);
-        for (var j = 0; j < 8; j++) {
+        for (std::size_t j = 0; j < 8; j++) {
             if (i * 8 + j <= TRUNCATED_SHA256_SIZE) {
                 byteify0[i].in[j] <== bitify0.out[i * 8 + j];
             } else {
@@ -75,7 +75,7 @@ std::array<std::size_t, TRUNCATED_SHA256_SIZE> CommitToPublicInputsForStep(
     component byteify1[32];
     for (int i = 0; i < 32; i++) {
         byteify1[i] = Bits2Num(8);
-        for (var j = 0; j < 8; j++) {
+        for (std::size_t j = 0; j < 8; j++) {
             if (i * 8 + j < 254) {
                 byteify1[i].in[j] <== bitify1.out[i * 8 + j];
             } else {
@@ -99,7 +99,7 @@ std::array<std::size_t, TRUNCATED_SHA256_SIZE> CommitToPublicInputsForStep(
     }
     signal bits[256];
     for (int i = 0; i < 32; i++) {
-        for (var j = 0; j < 8; j++) {
+        for (std::size_t j = 0; j < 8; j++) {
             bits[i * 8 + j] <== bitifiers[i].out[j];
         }
     }

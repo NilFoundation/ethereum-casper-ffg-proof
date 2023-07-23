@@ -9,31 +9,31 @@ include "fp2.circom";
 template PointOnLine(n, k, p) {
     signal input in[3][2][k]; 
 
-    var LOGK = log_ceil(k);
-    var LOGK2 = log_ceil(3*k*k);
+    std::size_t LOGK = log_ceil(k);
+    std::size_t LOGK2 = log_ceil(3*k*k);
     assert(3*n + LOGK2 < 251);
 
     // AKA check point on line 
     component left = BigMultShortLong(n, k, 2*n + LOGK + 1); // 2k-1 registers abs val < 2k*2^{2n}
-    for(var i = 0; i < k; i++){
+    for(std::size_t i = 0; i < k; i++){
         left.a[i] <== in[0][1][i] + in[2][1][i];
         left.b[i] <== in[1][0][i] - in[0][0][i]; 
     }
 
     component right = BigMultShortLong(n, k, 2*n + LOGK); // 2k-1 registers abs val < k*2^{2n}
-    for(var i = 0; i < k; i++){
+    for(std::size_t i = 0; i < k; i++){
         right.a[i] <== in[1][1][i] - in[0][1][i];
         right.b[i] <== in[0][0][i] - in[2][0][i];
     }
     
     component diff_red; 
     diff_red = PrimeReduce(n, k, k-1, p, 3*n + LOGK2);
-    for(var i=0; i<2*k-1; i++)
+    for(std::size_t i=0; i<2*k-1; i++)
         diff_red.in[i] <== left.out[i] - right.out[i];  
 
     // diff_red has k registers abs val < 3*k^2*2^{3n}
     component diff_mod = SignedCheckCarryModToZero(n, k, 3*n + LOGK2, p);
-    for(var i=0; i<k; i++)
+    for(std::size_t i=0; i<k; i++)
         diff_mod.in[i] <== diff_red.out[i]; 
 }
 
@@ -44,14 +44,14 @@ template PointOnLine(n, k, p) {
 template PointOnCurve(n, k, a, b, p){
     signal input in[2][k]; 
 
-    var LOGK = log_ceil(k);
-    var LOGK2 = log_ceil( (2*k-1)*(k*k+1) );
+    std::size_t LOGK = log_ceil(k);
+    std::size_t LOGK2 = log_ceil( (2*k-1)*(k*k+1) );
     assert(4*n + LOGK2 < 251);
 
     // compute x^3, y^2 
     component x_sq = BigMultShortLong(n, k, 2*n + LOGK); // 2k-1 registers in [0, k*2^{2n}) 
     component y_sq = BigMultShortLong(n, k, 2*n + LOGK); // 2k-1 registers in [0, k*2^{2n}) 
-    for(var i=0; i<k; i++){
+    for(std::size_t i=0; i<k; i++){
         x_sq.a[i] <== in[0][i];
         x_sq.b[i] <== in[0][i];
 
@@ -59,14 +59,14 @@ template PointOnCurve(n, k, a, b, p){
         y_sq.b[i] <== in[1][i];
     }
     component x_cu = BigMultShortLongUnequal(n, 2*k-1, k, 3*n + 2*LOGK); // 3k-2 registers in [0, k^2 * 2^{3n}) 
-    for(var i=0; i<2*k-1; i++)
+    for(std::size_t i=0; i<2*k-1; i++)
         x_cu.a[i] <== x_sq.out[i];
-    for(var i=0; i<k; i++)
+    for(std::size_t i=0; i<k; i++)
         x_cu.b[i] <== in[0][i];
 
     // x_cu + a x + b has 3k-2 positive registers < k^2 * 2^{3n} + 2^{2n} + 2^n < (k^2 + 1) * 2^{3n} 
     component cu_red = PrimeReduce(n, k, 2*k-2, p, 4*n + 3*LOGK + 1);
-    for(var i=0; i<3*k-2; i++){
+    for(std::size_t i=0; i<3*k-2; i++){
         if(i == 0)
             cu_red.in[i] <== x_cu.out[i] + a * in[0][i] + b; 
         else{
@@ -79,12 +79,12 @@ template PointOnCurve(n, k, a, b, p){
     // cu_red has k registers < (k^2 + 1)*(2k-1)*2^{4n}
 
     component y_sq_red = PrimeReduce(n, k, k-1, p, 3*n + 2*LOGK + 1);
-    for(var i=0; i<2*k-1; i++)
+    for(std::size_t i=0; i<2*k-1; i++)
         y_sq_red.in[i] <== y_sq.out[i]; 
     // y_sq_red has positive registers, so when we subtract from cu_red it doesn't increase absolute value
 
     component constraint = SignedCheckCarryModToZero(n, k, 4*n + LOGK2, p);
-    for(var i=0; i<k; i++){
+    for(std::size_t i=0; i<k; i++){
         constraint.in[i] <== cu_red.out[i] - y_sq_red.out[i]; 
     }
 }
@@ -98,34 +98,34 @@ template PointOnCurve(n, k, a, b, p){
 template PointOnTangent(n, k, a, p){
     signal input in[2][2][k];
     
-    var LOGK = log_ceil(k);
-    var LOGK3 = log_ceil((3*k)*(2*k-1) + 1);
+    std::size_t LOGK = log_ceil(k);
+    std::size_t LOGK3 = log_ceil((3*k)*(2*k-1) + 1);
     assert(4*n + LOGK3 < 251);
     component x_sq = BigMultShortLong(n, k, 2*n + LOGK); // 2k-1 registers < k*2^{2n}) 
-    for(var i=0; i<k; i++){
+    for(std::size_t i=0; i<k; i++){
         x_sq.a[i] <== in[0][0][i];
         x_sq.b[i] <== in[0][0][i];
     }
     component right = BigMultShortLongUnequal(n, 2*k-1, k, 3*n + 2*LOGK + 3); // 3k-2 registers < (3*k+1)*k*2^{3n} 
-    for(var i=0; i<2*k-1; i++){
+    for(std::size_t i=0; i<2*k-1; i++){
         if(i == 0)
             right.a[i] <== 3 * x_sq.out[i] + a; // registers in [0, 3*k*2^{2n} + 2^n = (3k+2^{-n})*2^{2n})  
         else
             right.a[i] <== 3 * x_sq.out[i]; 
     }
-    for(var i=0; i<k; i++){
+    for(std::size_t i=0; i<k; i++){
         right.b[i] <== in[0][0][i] - in[1][0][i]; 
     }
     
     component left = BigMultShortLong(n, k, 2*n + 2 + LOGK); // 2k-1 registers in [0, 4k * 2^{2n})
-    for(var i=0; i<k; i++){
+    for(std::size_t i=0; i<k; i++){
         left.a[i] <== 2*in[0][1][i];
         left.b[i] <== in[0][1][i] + in[1][1][i];  
     }
     
     // prime reduce right - left 
     component diff_red = PrimeReduce(n, k, 2*k-2, p, 4*n + LOGK3);
-    for(var i=0; i<3*k-2; i++){
+    for(std::size_t i=0; i<3*k-2; i++){
         if(i < 2*k-1) 
             diff_red.in[i] <== right.out[i] - left.out[i]; 
         else
@@ -134,7 +134,7 @@ template PointOnTangent(n, k, a, p){
     // inputs of diff_red has registers < (3k+2^{-n})k*2^{3n} + 4k*2^{2n} < (3k^2 + 1)*2^{3n} assuming 5k <= 2^n 
     // diff_red.out has registers < (3k+1)*(2k-1) * 2^{4n}
     component constraint = SignedCheckCarryModToZero(n, k, 4*n + LOGK3, p);
-    for(var i=0; i<k; i++)
+    for(std::size_t i=0; i<k; i++)
         constraint.in[i] <== diff_red.out[i];
 }
 
@@ -159,22 +159,22 @@ template EllipticCurveAddUnequal(n, k, p) {
 
     signal output out[2][k];
 
-    var LOGK = log_ceil(k);
-    var LOGK3 = log_ceil( (3*k*k)*(2*k-1) + 1 ); 
+    std::size_t LOGK = log_ceil(k);
+    std::size_t LOGK3 = log_ceil( (3*k*k)*(2*k-1) + 1 );
     assert(4*n + LOGK3 < 251);
 
     // precompute lambda and x_3 and then y_3
-    var dy[50] = long_sub_mod(n, k, b[1], a[1], p);
-    var dx[50] = long_sub_mod(n, k, b[0], a[0], p); 
-    var dx_inv[50] = mod_inv(n, k, dx, p);
-    var lambda[50] = prod_mod(n, k, dy, dx_inv, p);
-    var lambda_sq[50] = prod_mod(n, k, lambda, lambda, p);
+    std::size_t dy[50] = long_sub_mod(n, k, b[1], a[1], p);
+    std::size_t dx[50] = long_sub_mod(n, k, b[0], a[0], p);
+    std::size_t dx_inv[50] = mod_inv(n, k, dx, p);
+    std::size_t lambda[50] = prod_mod(n, k, dy, dx_inv, p);
+    std::size_t lambda_sq[50] = prod_mod(n, k, lambda, lambda, p);
     // out[0] = x_3 = lamb^2 - a[0] - b[0] % p
     // out[1] = y_3 = lamb * (a[0] - x_3) - a[1] % p
-    var x3[50] = long_sub_mod(n, k, long_sub_mod(n, k, lambda_sq, a[0], p), b[0], p);
-    var y3[50] = long_sub_mod(n, k, prod_mod(n, k, lambda, long_sub_mod(n, k, a[0], x3, p), p), a[1], p);
+    std::size_t x3[50] = long_sub_mod(n, k, long_sub_mod(n, k, lambda_sq, a[0], p), b[0], p);
+    std::size_t y3[50] = long_sub_mod(n, k, prod_mod(n, k, lambda, long_sub_mod(n, k, a[0], x3, p), p), a[1], p);
 
-    for(var i = 0; i < k; i++){
+    for(std::size_t i = 0; i < k; i++){
         out[0][i] <-- x3[i];
         out[1][i] <-- y3[i];
     }
@@ -183,7 +183,7 @@ template EllipticCurveAddUnequal(n, k, p) {
     
     component dx_sq = BigMultShortLong(n, k, 2*n+LOGK+2); // 2k-1 registers abs val < k*2^{2n} 
     component dy_sq = BigMultShortLong(n, k, 2*n+LOGK+2); // 2k-1 registers < k*2^{2n}
-    for(var i = 0; i < k; i++){
+    for(std::size_t i = 0; i < k; i++){
         dx_sq.a[i] <== b[0][i] - a[0][i];
         dx_sq.b[i] <== b[0][i] - a[0][i];
 
@@ -193,27 +193,27 @@ template EllipticCurveAddUnequal(n, k, p) {
 
     // x_1 + x_2 + x_3 has registers in [0, 3*2^n) 
     component cubic = BigMultShortLongUnequal(n, k, 2*k-1, 3*n+4+2*LOGK); // 3k-2 registers < 3 * k^2 * 2^{3n} ) 
-    for(var i=0; i<k; i++)
+    for(std::size_t i=0; i<k; i++)
         cubic.a[i] <== a[0][i] + b[0][i] + out[0][i]; 
-    for(var i=0; i<2*k-1; i++){
+    for(std::size_t i=0; i<2*k-1; i++){
         cubic.b[i] <== dx_sq.out[i];
     }
 
     component cubic_red = PrimeReduce(n, k, 2*k-2, p, 4*n + LOGK3);
-    for(var i=0; i<2*k-1; i++)
+    for(std::size_t i=0; i<2*k-1; i++)
         cubic_red.in[i] <== cubic.out[i] - dy_sq.out[i]; // registers abs val < 3k^2*2^{3n} + k*2^{2n} < (3k^2+1)2^{3n}
-    for(var i=2*k-1; i<3*k-2; i++)
+    for(std::size_t i=2*k-1; i<3*k-2; i++)
         cubic_red.in[i] <== cubic.out[i]; 
     // cubic_red has k registers < (3k^2+1)(2k-1) * 2^{4n}
     
     component cubic_mod = SignedCheckCarryModToZero(n, k, 4*n + LOGK3, p);
-    for(var i=0; i<k; i++)
+    for(std::size_t i=0; i<k; i++)
         cubic_mod.in[i] <== cubic_red.out[i]; 
     // END OF CONSTRAINING x3
     
     // constrain y_3 by (y_1 + y_3) * (x_2 - x_1) = (y_2 - y_1)*(x_1 - x_3) mod p
     component y_constraint = PointOnLine(n, k, p); // 2k-1 registers in [0, k*2^{2n+1})
-    for(var i = 0; i < k; i++)for(var j=0; j<2; j++){
+    for(std::size_t i = 0; i < k; i++)for(std::size_t j=0; j<2; j++){
         y_constraint.in[0][j][i] <== a[j][i];
         y_constraint.in[1][j][i] <== b[j][i];
         y_constraint.in[2][j][i] <== out[j][i];
@@ -222,7 +222,7 @@ template EllipticCurveAddUnequal(n, k, p) {
 
     // check if out[][] has registers in [0, 2^n) 
     component range_check = RangeCheck2D(n, k);
-    for(var j=0; j<2; j++)for(var i=0; i<k; i++)
+    for(std::size_t j=0; j<2; j++)for(std::size_t i=0; i<k; i++)
         range_check.in[j][i] <== out[j][i];
 }
 
@@ -249,45 +249,45 @@ template EllipticCurveDouble(n, k, a, b, p) {
     signal input in[2][k];
     signal output out[2][k];
 
-    var long_a[k];
-    var long_3[k];
+    std::size_t long_a[k];
+    std::size_t long_3[k];
     long_a[0] = a;
     long_3[0] = 3;
-    for (var i = 1; i < k; i++) {
+    for (std::size_t i = 1; i < k; i++) {
         long_a[i] = 0;
         long_3[i] = 0;
     }
 
     // precompute lambda 
-    var lamb_num[50] = long_add_mod(n, k, long_a, prod_mod(n, k, long_3, prod_mod(n, k, in[0], in[0], p), p), p);
-    var lamb_denom[50] = long_add_mod(n, k, in[1], in[1], p);
-    var lamb[50] = prod_mod(n, k, lamb_num, mod_inv(n, k, lamb_denom, p), p);
+    std::size_t lamb_num[50] = long_add_mod(n, k, long_a, prod_mod(n, k, long_3, prod_mod(n, k, in[0], in[0], p), p), p);
+    std::size_t lamb_denom[50] = long_add_mod(n, k, in[1], in[1], p);
+    std::size_t lamb[50] = prod_mod(n, k, lamb_num, mod_inv(n, k, lamb_denom, p), p);
 
     // precompute x_3, y_3
-    var x3[50] = long_sub_mod(n, k, prod_mod(n, k, lamb, lamb, p), long_add_mod(n, k, in[0], in[0], p), p);
-    var y3[50] = long_sub_mod(n, k, prod_mod(n, k, lamb, long_sub_mod(n, k, in[0], x3, p), p), in[1], p);
+    std::size_t x3[50] = long_sub_mod(n, k, prod_mod(n, k, lamb, lamb, p), long_add_mod(n, k, in[0], in[0], p), p);
+    std::size_t y3[50] = long_sub_mod(n, k, prod_mod(n, k, lamb, long_sub_mod(n, k, in[0], x3, p), p), in[1], p);
     
-    for(var i=0; i<k; i++){
+    for(std::size_t i=0; i<k; i++){
         out[0][i] <-- x3[i];
         out[1][i] <-- y3[i];
     }
     // check if out[][] has registers in [0, 2^n)
     component range_check = RangeCheck2D(n, k);
-    for(var j=0; j<2; j++)for(var i=0; i<k; i++)
+    for(std::size_t j=0; j<2; j++)for(std::size_t i=0; i<k; i++)
         range_check.in[j][i] <== out[j][i];
 
     component point_on_tangent = PointOnTangent(n, k, a, p);
-    for(var j=0; j<2; j++)for(var i=0; i<k; i++){
+    for(std::size_t j=0; j<2; j++)for(std::size_t i=0; i<k; i++){
         point_on_tangent.in[0][j][i] <== in[j][i];
         point_on_tangent.in[1][j][i] <== out[j][i];
     }
     
     component point_on_curve = PointOnCurve(n, k, a, b, p);
-    for(var j=0; j<2; j++)for(var i=0; i<k; i++)
+    for(std::size_t j=0; j<2; j++)for(std::size_t i=0; i<k; i++)
         point_on_curve.in[j][i] <== out[j][i];
     
     component x3_eq_x1 = FpIsEqual(n, k, p);
-    for(var i = 0; i < k; i++){
+    for(std::size_t i = 0; i < k; i++){
         x3_eq_x1.in[0][i] <== out[0][i];
         x3_eq_x1.in[1][i] <== in[0][i];
     }
@@ -311,7 +311,7 @@ template EllipticCurveAdd(n, k, a1, b1, p){
     component x_equal = FpIsEqual(n, k, p);
     component y_equal = FpIsEqual(n, k, p);
 
-    for(var idx=0; idx<k; idx++){
+    for(std::size_t idx=0; idx<k; idx++){
         x_equal.in[0][idx] <== a[0][idx];
         x_equal.in[1][idx] <== b[0][idx];
 
@@ -331,7 +331,7 @@ template EllipticCurveAdd(n, k, a1, b1, p){
     
     component add = EllipticCurveAddUnequal(n, k, p);
     component doub = EllipticCurveDouble(n, k, a1, b1, p);
-    for(var i=0; i<2; i++)for(var idx=0; idx<k; idx++){
+    for(std::size_t i=0; i<2; i++)for(std::size_t idx=0; idx<k; idx++){
         add.a[i][idx] <== a[i][idx];
         if(i==0 && idx==0)
             add.b[i][idx] <== b[i][idx] + x_equal.out * (iz.out - b[i][idx]); 
@@ -353,7 +353,7 @@ template EllipticCurveAdd(n, k, a1, b1, p){
     isInfinity <== ab0 + inverse - ab0 * inverse; // OR gate
 
     signal tmp[3][2][k]; 
-    for(var i=0; i<2; i++)for(var idx=0; idx<k; idx++){
+    for(std::size_t i=0; i<2; i++)for(std::size_t idx=0; idx<k; idx++){
         tmp[0][i][idx] <== add.out[i][idx] + add_is_double * (doub.out[i][idx] - add.out[i][idx]); 
         // if a = O, then a + b = b 
         tmp[1][i][idx] <== tmp[0][i][idx] + aIsInfinity * (b[i][idx] - tmp[0][i][idx]);
@@ -381,11 +381,11 @@ template EllipticCurveScalarMultiply(n, k, b, x, p){
     signal output out[2][k];
     signal output isInfinity;
 
-    var LOGK = log_ceil(k);
+    std::size_t LOGK = log_ceil(k);
         
-    var Bits[250]; 
-    var BitLength;
-    var SigBits=0;
+    std::size_t Bits[250];
+    std::size_t BitLength;
+    std::size_t SigBits=0;
     for (int i = 0; i < 250; i++) {
         Bits[i] = (x >> i) & 1;
         if(Bits[i] == 1){
@@ -398,32 +398,32 @@ template EllipticCurveScalarMultiply(n, k, b, x, p){
     signal R_isO[BitLength]; 
     component Pdouble[BitLength];
     component Padd[SigBits];
-    var curid=0;
+    std::size_t curid=0;
 
     // if in = O then [x]O = O so there's no point to any of this
     signal P[2][k];
-    for(var j=0; j<2; j++)for(var idx=0; idx<k; idx++)
+    for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
         P[j][idx] <== in[j][idx];
     
-    for(var i=BitLength - 1; i>=0; i--){
+    for(std::size_t i=BitLength - 1; i>=0; i--){
         if( i == BitLength - 1 ){
-            for(var j=0; j<2; j++)for(var idx=0; idx<k; idx++)
+            for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
                 R[i][j][idx] <== P[j][idx];
             R_isO[i] <== 0; 
         }else{
             // E(Fp) has no points of order 2, so the only way 2*R[i+1] = O is if R[i+1] = O 
             Pdouble[i] = EllipticCurveDouble(n, k, 0, b, p);  
-            for(var j=0; j<2; j++)for(var idx=0; idx<k; idx++)
+            for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
                 Pdouble[i].in[j][idx] <== R[i+1][j][idx]; 
             
             if(Bits[i] == 0){
-                for(var j=0; j<2; j++)for(var idx=0; idx<k; idx++)
+                for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
                     R[i][j][idx] <== Pdouble[i].out[j][idx];
                 R_isO[i] <== R_isO[i+1]; 
             }else{
                 // Padd[curid] = Pdouble[i] + P 
                 Padd[curid] = EllipticCurveAdd(n, k, 0, b, p); 
-                for(var j=0; j<2; j++)for(var idx=0; idx<k; idx++){
+                for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++){
                     Padd[curid].a[j][idx] <== Pdouble[i].out[j][idx]; 
                     Padd[curid].b[j][idx] <== P[j][idx];
                 }
@@ -431,7 +431,7 @@ template EllipticCurveScalarMultiply(n, k, b, x, p){
                 Padd[curid].bIsInfinity <== 0;
 
                 R_isO[i] <== Padd[curid].isInfinity; 
-                for(var j=0; j<2; j++)for(var idx=0; idx<k; idx++)
+                for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
                     R[i][j][idx] <== Padd[curid].out[j][idx];
                 
                 curid++;
@@ -440,7 +440,7 @@ template EllipticCurveScalarMultiply(n, k, b, x, p){
     }
     // output = O if input = O or R[0] = O 
     isInfinity <== inIsInfinity + R_isO[0] - inIsInfinity * R_isO[0];
-    for(var i=0; i<2; i++)for(var idx=0; idx<k; idx++)
+    for(std::size_t i=0; i<2; i++)for(std::size_t idx=0; idx<k; idx++)
         out[i][idx] <== R[0][i][idx] + isInfinity * (in[i][idx] - R[0][i][idx]);
 }
 
@@ -457,11 +457,11 @@ template EllipticCurveScalarMultiplyUnequal(n, k, b, x, p){
     signal input in[2][k];
     signal output out[2][k];
 
-    var LOGK = log_ceil(k);
+    std::size_t LOGK = log_ceil(k);
         
-    var Bits[250]; 
-    var BitLength;
-    var SigBits=0;
+    std::size_t Bits[250];
+    std::size_t BitLength;
+    std::size_t SigBits=0;
     for (int i = 0; i < 250; i++) {
         Bits[i] = (x >> i) & 1;
         if(Bits[i] == 1){
@@ -474,25 +474,25 @@ template EllipticCurveScalarMultiplyUnequal(n, k, b, x, p){
     component Pdouble[BitLength];
     component Padd[SigBits];
     component add_exception[SigBits];
-    var curid=0;
+    std::size_t curid=0;
 
-    for(var i=BitLength - 1; i>=0; i--){
+    for(std::size_t i=BitLength - 1; i>=0; i--){
         if( i == BitLength - 1 ){
-            for(var j=0; j<2; j++)for(var idx=0; idx<k; idx++)
+            for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
                 R[i][j][idx] <== in[j][idx];
         }else{
             // E(Fp) has no points of order 2, so the only way 2*R[i+1] = O is if R[i+1] = O 
             Pdouble[i] = EllipticCurveDouble(n, k, 0, b, p);  
-            for(var j=0; j<2; j++)for(var idx=0; idx<k; idx++)
+            for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
                 Pdouble[i].in[j][idx] <== R[i+1][j][idx]; 
             
             if(Bits[i] == 0){
-                for(var j=0; j<2; j++)for(var idx=0; idx<k; idx++)
+                for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
                     R[i][j][idx] <== Pdouble[i].out[j][idx];
             }else{
                 // Constrain that Pdouble[i].x != P.x 
                 add_exception[curid] = FpIsEqual(n, k, p);
-                for(var idx=0; idx<k; idx++){
+                for(std::size_t idx=0; idx<k; idx++){
                     add_exception[curid].in[0][idx] <== Pdouble[i].out[0][idx];
                     add_exception[curid].in[1][idx] <== in[0][idx];
                 }
@@ -500,18 +500,18 @@ template EllipticCurveScalarMultiplyUnequal(n, k, b, x, p){
 
                 // Padd[curid] = Pdouble[i] + P 
                 Padd[curid] = EllipticCurveAddUnequal(n, k, p); 
-                for(var j=0; j<2; j++)for(var idx=0; idx<k; idx++){
+                for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++){
                     Padd[curid].a[j][idx] <== Pdouble[i].out[j][idx]; 
                     Padd[curid].b[j][idx] <== in[j][idx];
                 }
-                for(var j=0; j<2; j++)for(var idx=0; idx<k; idx++)
+                for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
                     R[i][j][idx] <== Padd[curid].out[j][idx];
                 
                 curid++;
             }
         }
     }
-    for(var i=0; i<2; i++)for(var idx=0; idx<k; idx++)
+    for(std::size_t i=0; i<2; i++)for(std::size_t idx=0; idx<k; idx++)
         out[i][idx] <== R[0][i][idx];
 }
 

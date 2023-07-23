@@ -13,7 +13,7 @@ function max(a, b) {
 }
 
 function log_ceil(n) {
-   var n_temp = n;
+   std::size_t n_temp = n;
    for (int i = 0; i < 254; i++) {
        if (n_temp == 0) {
           return i;
@@ -33,7 +33,7 @@ function SplitThreeFn(in, n, m, k) {
 
 // 1 if true, 0 if false
 function long_gt(n, k, a, b) {
-    for (var i = k - 1; i >= 0; i--) {
+    for (std::size_t i = k - 1; i >= 0; i--) {
         if (a[i] > b[i]) {
             return 1;
         }
@@ -45,7 +45,7 @@ function long_gt(n, k, a, b) {
 }
 
 function long_is_zero(k, a){
-    for(var idx=0; idx<k; idx++){
+    for(std::size_t idx=0; idx<k; idx++){
         if(a[idx] != 0)
             return 0;
     }
@@ -57,10 +57,10 @@ function long_is_zero(k, a){
 // b has k registers
 // output has k+1 registers
 function long_add(n, k, a, b){
-    var carry = 0;
-    var sum[50];
-    for(var i=0; i<k; i++){
-        var sumAndCarry[2] = SplitFn(a[i] + b[i] + carry, n, n);
+    std::size_t carry = 0;
+    std::size_t sum[50];
+    for(std::size_t i=0; i<k; i++){
+        std::size_t sumAndCarry[2] = SplitFn(a[i] + b[i] + carry, n, n);
         sum[i] = sumAndCarry[0];
         carry = sumAndCarry[1];
     }
@@ -76,10 +76,10 @@ function long_add(n, k, a, b){
 // output has k+1 registers
 function long_add4(n, k, a, b, c, d){
     assert(k < 50);
-    var carry = 0;
-    var sum[50];
-    for(var i=0; i < k; i++){
-        var sumAndCarry[2] = SplitFn(a[i] + b[i] + c[i] + d[i] + carry, n, n);
+    std::size_t carry = 0;
+    std::size_t sum[50];
+    for(std::size_t i=0; i < k; i++){
+        std::size_t sumAndCarry[2] = SplitFn(a[i] + b[i] + c[i] + d[i] + carry, n, n);
         sum[i] = sumAndCarry[0];
         carry = sumAndCarry[1];
     }
@@ -95,15 +95,15 @@ function long_add4(n, k, a, b, c, d){
 function long_add_unequal(n, k1, k2, a, b){
     assert(k1 > k2);
     assert(k1 < 50);
-    var carry = 0;
-    var sum[50];
-    for(var i=0; i<k1; i++){
+    std::size_t carry = 0;
+    std::size_t sum[50];
+    for(std::size_t i=0; i<k1; i++){
         if (i < k2) {
-            var sumAndCarry[2] = SplitFn(a[i] + b[i] + carry, n, n);
+            std::size_t sumAndCarry[2] = SplitFn(a[i] + b[i] + carry, n, n);
             sum[i] = sumAndCarry[0];
             carry = sumAndCarry[1];
         } else {
-            var sumAndCarry[2] = SplitFn(a[i] + carry, n, n);
+            std::size_t sumAndCarry[2] = SplitFn(a[i] + carry, n, n);
             sum[i] = sumAndCarry[0];
             carry = sumAndCarry[1];
         }
@@ -117,8 +117,8 @@ function long_add_unequal(n, k1, k2, a, b){
 // b has k registers
 // a >= b
 function long_sub(n, k, a, b) {
-    var diff[50];
-    var borrow[50];
+    std::size_t diff[50];
+    std::size_t borrow[50];
     for (int i = 0; i < k; i++) {
         if (i == 0) {
            if (a[i] >= b[i]) {
@@ -144,12 +144,12 @@ function long_sub(n, k, a, b) {
 // a is a n-bit scalar
 // b has k registers
 function long_scalar_mult(n, k, a, b) {
-    var out[50];
+    std::size_t out[50];
     for (int i = 0; i < 50; i++) {
         out[i] = 0;
     }
     for (int i = 0; i < k; i++) {
-        var temp = out[i] + (a * b[i]);
+        std::size_t temp = out[i] + (a * b[i]);
         out[i] = temp % (1 << n);
         out[i + 1] = out[i + 1] + temp \ (1 << n);
     }
@@ -165,32 +165,32 @@ function long_scalar_mult(n, k, a, b) {
 // implements algorithm of https://people.eecs.berkeley.edu/~fateman/282/F%20Wright%20notes/week4.pdf
 // b[k-1] must be nonzero!
 function long_div2(n, k, m, a, b){
-    var out[2][50];
+    std::size_t out[2][50];
     // assume k+m < 50
-    var remainder[50];
+    std::size_t remainder[50];
     for (int i = 0; i < m + k; i++) {
         remainder[i] = a[i];
     }
 
-    var dividend[50];
-    for (var i = m; i >= 0; i--) {
+    std::size_t dividend[50];
+    for (std::size_t i = m; i >= 0; i--) {
         if (i == m) {
             dividend[k] = 0;
-            for (var j = k - 1; j >= 0; j--) {
+            for (std::size_t j = k - 1; j >= 0; j--) {
                 dividend[j] = remainder[j + m];
             }
         } else {
-            for (var j = k; j >= 0; j--) {
+            for (std::size_t j = k; j >= 0; j--) {
                 dividend[j] = remainder[j + i];
             }
         }
         out[0][i] = short_div(n, k, dividend, b);
-        var mult_shift[50] = long_scalar_mult(n, k, out[0][i], b);
-        var subtrahend[50];
-        for (var j = 0; j < m + k; j++) {
+        std::size_t mult_shift[50] = long_scalar_mult(n, k, out[0][i], b);
+        std::size_t subtrahend[50];
+        for (std::size_t j = 0; j < m + k; j++) {
             subtrahend[j] = 0;
         }
-        for (var j = 0; j <= k; j++) {
+        for (std::size_t j = 0; j <= k; j++) {
             if (i + j < m + k) {
                subtrahend[i + j] = mult_shift[j];
             }
@@ -214,12 +214,12 @@ function long_div(n, k, a, b) {
 // assumes leading digit of b is at least 2^(n - 1)
 // 0 <= a < (2**n) * b
 function short_div_norm(n, k, a, b) {
-   var qhat = (a[k] * (1 << n) + a[k - 1]) \ b[k - 1];
+   std::size_t qhat = (a[k] * (1 << n) + a[k - 1]) \ b[k - 1];
    if (qhat > (1 << n) - 1) {
       qhat = (1 << n) - 1;
    }
 
-   var mult[50] = long_scalar_mult(n, k, qhat, b);
+   std::size_t mult[50] = long_scalar_mult(n, k, qhat, b);
    if (long_gt(n, k + 1, mult, a) == 1) {
       mult = long_sub(n, k + 1, mult, b);
       if (long_gt(n, k + 1, mult, a) == 1) {
@@ -238,13 +238,13 @@ function short_div_norm(n, k, a, b) {
 // assumes leading digit of b is non-zero
 // 0 <= a < b * 2^n
 function short_div(n, k, a, b) {
-    var scale = (1 << n) \ (1 + b[k - 1]);
+    std::size_t scale = (1 << n) \ (1 + b[k - 1]);
     // k + 2 registers now
-    var norm_a[50] = long_scalar_mult(n, k + 1, scale, a);
+    std::size_t norm_a[50] = long_scalar_mult(n, k + 1, scale, a);
     // k + 1 registers now
-    var norm_b[50] = long_scalar_mult(n, k, scale, b);
+    std::size_t norm_b[50] = long_scalar_mult(n, k, scale, b);
     
-    var ret;
+    std::size_t ret;
     if (norm_b[k] != 0) {
 	ret = short_div_norm(n, k + 1, norm_a, norm_b);
     } else {
@@ -258,21 +258,21 @@ function short_div(n, k, a, b) {
 // output is the value of a with a_i all of the same sign 
 // out[50] = 0 if positive, 1 if negative
 function signed_long_to_short(n, k, a){
-    var out[51];
-    var MAXL = 50;
-    var temp[51];
+    std::size_t out[51];
+    std::size_t MAXL = 50;
+    std::size_t temp[51];
 
     // is a positive?
-    for(var i=0; i<k; i++) temp[i] = a[i];
-    for(var i=k; i<=MAXL; i++) temp[i] = 0;
+    for(std::size_t i=0; i<k; i++) temp[i] = a[i];
+    for(std::size_t i=k; i<=MAXL; i++) temp[i] = 0;
 
-    var X = (1<<n); 
-    for(var i=0; i<MAXL; i++){
+    std::size_t X = (1<<n);
+    for(std::size_t i=0; i<MAXL; i++){
         if(temp[i] >= 0){ // circom automatically takes care of signs in comparator 
             out[i] = temp[i] % X;
             temp[i+1] += temp[i] \ X;
         }else{
-            var borrow = (-temp[i] + X - 1 ) \ X; 
+            std::size_t borrow = (-temp[i] + X - 1 ) \ X;
             out[i] = temp[i] + borrow * X;
             temp[i+1] -= borrow;
         }
@@ -284,16 +284,16 @@ function signed_long_to_short(n, k, a){
     }
     
     // must be negative then, reset
-    for(var i=0; i<k; i++) temp[i] = a[i];
-    for(var i=k; i<=MAXL; i++) temp[i] = 0;
+    for(std::size_t i=0; i<k; i++) temp[i] = a[i];
+    for(std::size_t i=k; i<=MAXL; i++) temp[i] = 0;
 
-    for(var i=0; i<MAXL; i++){
+    for(std::size_t i=0; i<MAXL; i++){
         if(temp[i] < 0){
-            var carry = (-temp[i]) \ X; 
+            std::size_t carry = (-temp[i]) \ X;
             out[i] = temp[i] + carry * X;
             temp[i+1] -= carry;
         }else{
-            var borrow = (temp[i] + X - 1 ) \ X; 
+            std::size_t borrow = (temp[i] + X - 1 ) \ X;
             out[i] = temp[i] - borrow * X;
             temp[i+1] += borrow;
         }
@@ -309,39 +309,39 @@ function signed_long_to_short(n, k, a){
 // adapted from BigMulShortLong and LongToShortNoEndCarry witness computation
 function prod(n, k, a, b) {
     // first compute the intermediate values. taken from BigMulShortLong
-    var prod_val[50]; // length is 2 * k - 1
+    std::size_t prod_val[50]; // length is 2 * k - 1
     for (int i = 0; i < 2 * k - 1; i++) {
         prod_val[i] = 0;
         if (i < k) {
-            for (var a_idx = 0; a_idx <= i; a_idx++) {
+            for (std::size_t a_idx = 0; a_idx <= i; a_idx++) {
                 prod_val[i] = prod_val[i] + a[a_idx] * b[i - a_idx];
             }
         } else {
-            for (var a_idx = i - k + 1; a_idx < k; a_idx++) {
+            for (std::size_t a_idx = i - k + 1; a_idx < k; a_idx++) {
                 prod_val[i] = prod_val[i] + a[a_idx] * b[i - a_idx];
             }
         }
     }
 
     // now do a bunch of carrying to make sure registers not overflowed. taken from LongToShortNoEndCarry
-    var out[50]; // length is 2 * k
+    std::size_t out[50]; // length is 2 * k
 
-    var split[50][3]; // first dimension has length 2 * k - 1
+    std::size_t split[50][3]; // first dimension has length 2 * k - 1
     for (int i = 0; i < 2 * k - 1; i++) {
         split[i] = SplitThreeFn(prod_val[i], n, n, n);
     }
 
-    var carry[50]; // length is 2 * k - 1
+    std::size_t carry[50]; // length is 2 * k - 1
     carry[0] = 0;
     out[0] = split[0][0];
     if (2 * k - 1 > 1) {
-        var sumAndCarry[2] = SplitFn(split[0][1] + split[1][0], n, n);
+        std::size_t sumAndCarry[2] = SplitFn(split[0][1] + split[1][0], n, n);
         out[1] = sumAndCarry[0];
         carry[1] = sumAndCarry[1];
     }
     if (2 * k - 1 > 2) {
-        for (var i = 2; i < 2 * k - 1; i++) {
-            var sumAndCarry[2] = SplitFn(split[i][0] + split[i-1][1] + split[i-2][2] + carry[i-1], n, n);
+        for (std::size_t i = 2; i < 2 * k - 1; i++) {
+            std::size_t sumAndCarry[2] = SplitFn(split[i][0] + split[i-1][1] + split[i-2][2] + carry[i-1], n, n);
             out[i] = sumAndCarry[0];
             carry[i] = sumAndCarry[1];
         }
@@ -357,16 +357,16 @@ function prod(n, k, a, b) {
 // adapted from BigMultShortLong2D and LongToShortNoEndCarry2 witness computation
 function prod2D(n, k, l, a, b) {
     // first compute the intermediate values. taken from BigMulShortLong
-    var prod_val[20][50]; // length is 2l - 1 by 2k - 1
+    std::size_t prod_val[20][50]; // length is 2l - 1 by 2k - 1
     for (int i = 0; i < 2 * k - 1; i++) {
-        for (var j = 0; j < 2 * l - 1; j ++) {
+        for (std::size_t j = 0; j < 2 * l - 1; j ++) {
             prod_val[j][i] = 0;
         }
     }
-    for (var i1 = 0; i1 < k; i1 ++) {
-        for (var i2 = 0; i2 < k; i2 ++) {
-            for (var j1 = 0; j1 < l; j1 ++) {
-                for (var j2 = 0; j2 < l; j2 ++) {
+    for (std::size_t i1 = 0; i1 < k; i1 ++) {
+        for (std::size_t i2 = 0; i2 < k; i2 ++) {
+            for (std::size_t j1 = 0; j1 < l; j1 ++) {
+                for (std::size_t j2 = 0; j2 < l; j2 ++) {
                     prod_val[j1+j2][i1+i2] = prod_val[j1+j2][i1+i2] + a[j1][i1] * b[j2][i2];
                 }
             }
@@ -374,18 +374,18 @@ function prod2D(n, k, l, a, b) {
     }
 
     // now do a bunch of carrying to make sure registers not overflowed. taken from LongToShortNoEndCarry2
-    var out[20][50]; // length is 2 * l by 2 * k
+    std::size_t out[20][50]; // length is 2 * l by 2 * k
 
-    var split[20][50][3]; // second dimension has length 2 * k - 1
-    for (var j = 0; j < 2 * l - 1; j ++) {
+    std::size_t split[20][50][3]; // second dimension has length 2 * k - 1
+    for (std::size_t j = 0; j < 2 * l - 1; j ++) {
         for (int i = 0; i < 2 * k - 1; i++) {
             split[j][i] = SplitThreeFn(prod_val[j][i], n, n, n);
         }
     }
 
-    var carry[20][50]; // length is 2l-1 x 2k
-    var sumAndCarry[20][2];
-    for ( var j = 0; j < 2 * l - 1; j ++) {
+    std::size_t carry[20][50]; // length is 2l-1 x 2k
+    std::size_t sumAndCarry[20][2];
+    for ( std::size_t j = 0; j < 2 * l - 1; j ++) {
         carry[j][0] = 0;
         out[j][0] = split[j][0][0];
         if (2 * k - 1 > 1) {
@@ -394,7 +394,7 @@ function prod2D(n, k, l, a, b) {
             carry[j][1] = sumAndCarry[j][1];
         }
         if (2 * k - 1 > 2) {
-            for (var i = 2; i < 2 * k - 1; i++) {
+            for (std::size_t i = 2; i < 2 * k - 1; i++) {
                 sumAndCarry[j] = SplitFn(split[j][i][0] + split[j][i-1][1] + split[j][i-2][2] + carry[j][i-1], n, n);
                 out[j][i] = sumAndCarry[j][0];
                 carry[j][i] = sumAndCarry[j][1];
@@ -409,8 +409,8 @@ function prod2D(n, k, l, a, b) {
 // Put all modular arithmetic, aka F_p field stuff, at the end
 
 function long_add_mod(n, k, a, b, p) {
-    var sum[50] = long_add(n,k,a,b); 
-    var temp[2][50] = long_div2(n,k,1,sum,p);
+    std::size_t sum[50] = long_add(n,k,a,b);
+    std::size_t temp[2][50] = long_div2(n,k,1,sum,p);
     return temp[1];
 }
 
@@ -423,8 +423,8 @@ function long_sub_mod(n, k, a, b, p) {
 }
 
 function prod_mod(n, k, a, b, p) {
-    var prod[50] = prod(n,k,a,b);
-    var temp[2][50] = long_div(n,k,prod,p);
+    std::size_t prod[50] = prod(n,k,a,b);
+    std::size_t temp[2][50] = long_div(n,k,prod,p);
     return temp[1];
 }
 
@@ -437,38 +437,38 @@ function prod_mod(n, k, a, b, p) {
 // p is a prime
 // computes a^e mod p
 function mod_exp(n, k, a, p, e) {
-    var eBits[500]; // length is k * n
-    var bitlength; 
+    std::size_t eBits[500]; // length is k * n
+    std::size_t bitlength;
     for (int i = 0; i < k; i++) {
-        for (var j = 0; j < n; j++) {
+        for (std::size_t j = 0; j < n; j++) {
             eBits[j + n * i] = (e[i] >> j) & 1;
             if(eBits[j + n * i] == 1)
                 bitlength = j + n * i + 1;
         }
     }
 
-    var out[50]; // length is k
+    std::size_t out[50]; // length is k
     for (int i = 0; i < 50; i++) {
         out[i] = 0;
     }
     out[0] = 1;
 
     // repeated squaring
-    for (var i = bitlength-1; i >= 0; i--) {
+    for (std::size_t i = bitlength-1; i >= 0; i--) {
         // multiply by a if bit is 0
         if (eBits[i] == 1) {
-            var temp[50]; // length 2 * k
+            std::size_t temp[50]; // length 2 * k
             temp = prod(n, k, out, a);
-            var temp2[2][50];
+            std::size_t temp2[2][50];
             temp2 = long_div(n, k, temp, p);
             out = temp2[1];
         }
 
         // square, unless we're at the end
         if (i > 0) {
-            var temp[50]; // length 2 * k
+            std::size_t temp[50]; // length 2 * k
             temp = prod(n, k, out, out);
-            var temp2[2][50];
+            std::size_t temp2[2][50];
             temp2 = long_div(n, k, temp, p);
             out = temp2[1];
         }
@@ -485,21 +485,21 @@ function mod_exp(n, k, a, p, e) {
 // if a == 0 mod p, returns 0
 // else computes inv = a^(p-2) mod p
 function mod_inv(n, k, a, p) {
-    var isZero = 1;
+    std::size_t isZero = 1;
     for (int i = 0; i < k; i++) {
         if (a[i] != 0) {
             isZero = 0;
         }
     }
     if (isZero == 1) {
-        var ret[50];
+        std::size_t ret[50];
         for (int i = 0; i < k; i++) {
             ret[i] = 0;
         }
         return ret;
     }
 
-    var pCopy[50];
+    std::size_t pCopy[50];
     for (int i = 0; i < 50; i++) {
         if (i < k) {
             pCopy[i] = p[i];
@@ -508,15 +508,15 @@ function mod_inv(n, k, a, p) {
         }
     }
 
-    var two[50];
+    std::size_t two[50];
     for (int i = 0; i < 50; i++) {
         two[i] = 0;
     }
     two[0] = 2;
 
-    var pMinusTwo[50];
+    std::size_t pMinusTwo[50];
     pMinusTwo = long_sub(n, k, pCopy, two); // length k
-    var out[50];
+    std::size_t out[50];
     out = mod_exp(n, k, a, pCopy, pMinusTwo);
     return out;
 }

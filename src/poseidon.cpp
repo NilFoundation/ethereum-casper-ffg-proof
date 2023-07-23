@@ -19,7 +19,7 @@ std::size_t PoseidonSponge(const std::array<std::size_t, LENGTH> &in) {
         } else {
             hashers[i] = PoseidonEx(POSEIDON_SIZE, 2);
         }
-        for (var j = 0; j < POSEIDON_SIZE; j++) {
+        for (std::size_t j = 0; j < POSEIDON_SIZE; j++) {
             hashers[i].inputs[j] <= = in[i * POSEIDON_SIZE + j];
         }
 
@@ -38,8 +38,8 @@ std::size_t PoseidonG1Array(const std::array<std::array<std::array<std::size_t, 
     component hasher = PoseidonSponge(LENGTH * 2 * K);
 
     for (int i = 0; i < LENGTH; i++) {
-        for (var j = 0; j < K; j++) {
-            for (var l = 0; l < 2; l++) {
+        for (std::size_t j = 0; j < K; j++) {
+            for (std::size_t l = 0; l < 2; l++) {
                 hasher.in[(i * K * 2) + (j * 2) + l] <= = pubkeys[i][l][j];
             }
         }

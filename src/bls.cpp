@@ -26,15 +26,15 @@ void G1AddMany() {
 
     component reducers[LOG_2_SYNC_COMMITTEE_SIZE];
     for (int i = 0; i < LOG_2_SYNC_COMMITTEE_SIZE; i++) {
-        var BATCH_SIZE = SYNC_COMMITTEE_SIZE \ (2 * *i);
+        std::size_t BATCH_SIZE = SYNC_COMMITTEE_SIZE \ (2 * *i);
         reducers[i] = G1Reduce(BATCH_SIZE, N, K);
-        for (var j = 0; j < BATCH_SIZE; j++) {
+        for (std::size_t j = 0; j < BATCH_SIZE; j++) {
             if (i == 0) {
                 reducers[i].bits[j] <== bits[j];
             } else {
                 reducers[i].bits[j] <== reducers[i - 1].outBits[j];
             }
-            for (var q = 0; q < K; q++) {
+            for (std::size_t q = 0; q < K; q++) {
                 if (i == 0) {
                     reducers[i].pubkeys[j][0][q] <== pubkeys[j][0][q];
                     reducers[i].pubkeys[j][1][q] <== pubkeys[j][1][q];
@@ -47,7 +47,7 @@ void G1AddMany() {
     }
 
     for (int i = 0; i < 2; i++) {
-        for (var j = 0; j < K; j++) {
+        for (std::size_t j = 0; j < K; j++) {
             out[i][j] <== reducers[LOG_2_SYNC_COMMITTEE_SIZE - 1].out[0][i][j];
         }
     }
@@ -55,7 +55,7 @@ void G1AddMany() {
 }
 
 template G1Reduce(BATCH_SIZE, N, K) {
-    var OUTPUT_BATCH_SIZE = BATCH_SIZE \ 2;
+    std::size_t OUTPUT_BATCH_SIZE = BATCH_SIZE \ 2;
     signal input pubkeys[BATCH_SIZE][2][K];
     signal input bits[BATCH_SIZE];
     signal output out[OUTPUT_BATCH_SIZE][2][K];
@@ -66,8 +66,8 @@ template G1Reduce(BATCH_SIZE, N, K) {
         adders[i] = G1Add(N, K);
         adders[i].bit1 <== bits[i * 2];
         adders[i].bit2 <== bits[i * 2 + 1];
-        for (var j = 0; j < 2; j++) {
-            for (var l = 0; l < K; l++) {
+        for (std::size_t j = 0; j < 2; j++) {
+            for (std::size_t l = 0; l < K; l++) {
                 adders[i].pubkey1[j][l] <== pubkeys[i * 2][j][l];
                 adders[i].pubkey2[j][l] <== pubkeys[i * 2 + 1][j][l];
             }
@@ -76,8 +76,8 @@ template G1Reduce(BATCH_SIZE, N, K) {
 
     for (int i = 0; i < OUTPUT_BATCH_SIZE; i++) {
         outBits[i] <== adders[i].outBit;
-        for (var j = 0; j < 2; j++) {
-            for (var l = 0; l < K; l++) {
+        for (std::size_t j = 0; j < 2; j++) {
+            for (std::size_t l = 0; l < K; l++) {
                 out[i][j][l] <== adders[i].out[j][l];
             }
         }
@@ -85,9 +85,9 @@ template G1Reduce(BATCH_SIZE, N, K) {
 }
 
 template parallel G1Add(N, K) {
-    var A1 = CURVE_A1();
-    var B1 = CURVE_B1();
-    var P[7] = BLS128381_PRIME();
+    std::size_t A1 = CURVE_A1();
+    std::size_t B1 = CURVE_B1();
+    std::size_t P[7] = BLS128381_PRIME();
 
     signal input pubkey1[2][K];
     signal input pubkey2[2][K];
@@ -101,19 +101,19 @@ template parallel G1Add(N, K) {
     adder.aIsInfinity <== 1 - bit1;
     adder.bIsInfinity <== 1 - bit2;
     for (int i = 0; i < 2; i++) {
-        for (var j = 0; j < K; j++) {
+        for (std::size_t j = 0; j < K; j++) {
             adder.a[i][j] <== pubkey1[i][j];
             adder.b[i][j] <== pubkey2[i][j];
         }
     }
 
     for (int i = 0; i < 2; i++) {
-        for (var j = 0; j < K; j++) {
+        for (std::size_t j = 0; j < K; j++) {
             out[i][j] <== adder.out[i][j];
         }
     }
     outBit <== 1 - adder.isInfinity;
-    outBit*(outBit - 1) == = 0;
+    outBit*(outBit - 1) = 0;
 }
 
 template G1BytesToBigInt(N, K, G1_POINT_SIZE) {
@@ -128,8 +128,8 @@ template G1BytesToBigInt(N, K, G1_POINT_SIZE) {
     }
 
     signal pubkeyBits[G1_POINT_SIZE * 8];
-    for (var i = G1_POINT_SIZE - 1; i >= 0; i--) {
-        for (var j = 0; j < 8; j++) {
+    for (std::size_t i = G1_POINT_SIZE - 1; i >= 0; i--) {
+        for (std::size_t j = 0; j < 8; j++) {
             pubkeyBits[(G1_POINT_SIZE - 1 - i) * 8 + j] <== bitifiers[i].out[j];
         }
     }
@@ -137,7 +137,7 @@ template G1BytesToBigInt(N, K, G1_POINT_SIZE) {
     component convertBitsToBigInt[K];
     for (int i = 0; i < K; i++) {
         convertBitsToBigInt[i] = Bits2Num(N);
-        for (var j = 0; j < N; j++) {
+        for (std::size_t j = 0; j < N; j++) {
             if (i * N + j >= G1_POINT_SIZE * 8 || i * N + j >= 381) {
                 convertBitsToBigInt[i].in[j] <== 0;
             } else {
@@ -152,7 +152,7 @@ template G1BytesToBigInt(N, K, G1_POINT_SIZE) {
 
     // We check this bit is not 0 to make sure the point is not zero.
     // Reference: https://github.com/paulmillr/noble-bls12-381/blob/main/index.ts#L306
-    pubkeyBits[382] == = 0;
+    pubkeyBits[382] = 0;
 }
 
 template G1BytesToSignFlag(N, K, G1_POINT_SIZE) {
@@ -166,8 +166,8 @@ template G1BytesToSignFlag(N, K, G1_POINT_SIZE) {
     }
 
     signal pubkeyBits[G1_POINT_SIZE * 8];
-    for (var i = G1_POINT_SIZE - 1; i >= 0; i--) {
-        for (var j = 0; j < 8; j++) {
+    for (std::size_t i = G1_POINT_SIZE - 1; i >= 0; i--) {
+        for (std::size_t j = 0; j < 8; j++) {
             pubkeyBits[(G1_POINT_SIZE - 1 - i) * 8 + j] <== bitifiers[i].out[j];
         }
     }
@@ -181,8 +181,8 @@ template G1BigIntToSignFlag(N, K) {
     signal input in[K];
     signal output out;
 
-    var P[K] = BLS128381_PRIME();
-    var LOG_K = log_ceil(K);
+    std::size_t P[K] = BLS128381_PRIME();
+    std::size_t LOG_K = log_ceil(K);
     component mul = BigMult(N, K);
 
     signal two[K];

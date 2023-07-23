@@ -16,22 +16,22 @@ include "./bls12_381_func.circom";
 template PointOnLineFp2(n, k, p) {
     signal input in[3][2][2][k]; 
 
-    var LOGK = log_ceil(k);
-    var LOGK2 = log_ceil(6*k*k);
+    std::size_t LOGK = log_ceil(k);
+    std::size_t LOGK2 = log_ceil(6*k*k);
     assert(3*n + LOGK2 < 251);
 
     // AKA check point on line 
     component left = BigMultShortLong2D(n, k, 2); // 3 x 2k-1 registers abs val < 4k*2^{2n}
-    for(var i = 0; i < 2; i ++) {
-        for (var j = 0; j < k; j ++) {
+    for(std::size_t i = 0; i < 2; i ++) {
+        for (std::size_t j = 0; j < k; j ++) {
             left.a[i][j] <== in[0][1][i][j] + in[2][1][i][j];
             left.b[i][j] <== in[1][0][i][j] - in[0][0][i][j];
         }
     }
 
     component right = BigMultShortLong2D(n, k, 2); // 3 x 2k-1 registers abs val < 2k*2^{2n}
-    for(var i = 0; i < 2; i ++) {
-        for (var j = 0; j < k; j ++) {
+    for(std::size_t i = 0; i < 2; i ++) {
+        for (std::size_t j = 0; j < k; j ++) {
             right.a[i][j] <== in[1][1][i][j] - in[0][1][i][j];
             right.b[i][j] <== in[0][0][i][j] - in[2][0][i][j];
         }
@@ -40,13 +40,13 @@ template PointOnLineFp2(n, k, p) {
     component diff_red[2]; 
     diff_red[0] = PrimeReduce(n, k, k-1, p, 3*n + 2*LOGK + 2);
     diff_red[1] = PrimeReduce(n, k, k-1, p, 3*n + 2*LOGK + 1);
-    for(var i=0; i<2*k-1; i++) {
+    for(std::size_t i=0; i<2*k-1; i++) {
         diff_red[0].in[i] <== left.out[0][i] - left.out[2][i] - right.out[0][i] + right.out[2][i];
         diff_red[1].in[i] <== left.out[1][i] - right.out[1][i]; 
     }
     // diff_red has k registers abs val < 6*k^2*2^{3n} -- to see this, easier to use SignedFp2MultiplyNoCarry instead of BigMultShortLong2D 
     component diff_mod[2];
-    for (var j = 0; j < 2; j ++) {
+    for (std::size_t j = 0; j < 2; j ++) {
         diff_mod[j] = SignedCheckCarryModToZero(n, k, 3*n + LOGK2, p);
         for (int i = 0; i < k; i ++) {
             diff_mod[j].in[i] <== diff_red[j].out[i];
@@ -61,15 +61,15 @@ template PointOnLineFp2(n, k, p) {
 template PointOnCurveFp2(n, k, a, b, p){
     signal input in[2][2][k]; 
 
-    var LOGK = log_ceil(k);
-    var LOGK3 = log_ceil( (2*k-1)*(4*k*k) + 1 );
+    std::size_t LOGK = log_ceil(k);
+    std::size_t LOGK3 = log_ceil( (2*k-1)*(4*k*k) + 1 );
     assert(4*n + LOGK3 < 251);
 
     // compute x^3, y^2 
     component x_sq = SignedFp2MultiplyNoCarryUnequal(n, k, k, 2*n+1+LOGK); // 2k-1 registers in [0, 2*k*2^{2n}) 
     component y_sq = SignedFp2MultiplyNoCarryUnequal(n, k, k, 2*n+1+LOGK); // 2k-1 registers in [0, 2*k*2^{2n}) 
     for (int i = 0; i < 2; i ++) {
-        for (var j = 0; j < k ; j ++) {
+        for (std::size_t j = 0; j < k ; j ++) {
             x_sq.a[i][j] <== in[0][i][j];
             x_sq.b[i][j] <== in[0][i][j];
             y_sq.a[i][j] <== in[1][i][j];
@@ -78,19 +78,19 @@ template PointOnCurveFp2(n, k, a, b, p){
     }
     component x_cu = SignedFp2MultiplyNoCarryUnequal(n, 2*k-1, k, 3*n+2*LOGK+2); // 3k-2 registers in [0, 4*k^2 * 2^{3n}) 
     for (int i = 0; i < 2; i ++) {
-        for (var j = 0; j < 2*k-1; j ++) {
+        for (std::size_t j = 0; j < 2*k-1; j ++) {
             x_cu.a[i][j] <== x_sq.out[i][j];
         }
-        for (var j = 0; j < k; j ++) {
+        for (std::size_t j = 0; j < k; j ++) {
             x_cu.b[i][j] <== in[0][i][j];
         }
     }
 
     // x_cu + a x + b has 3k-2 registers < (4k^2 + 1/2^n + 1/2^2n)2^{3n} <= (4*k^2+2/2^n)2^{3n} 
     component cu_red[2];
-    for (var j = 0; j < 2; j ++) {
+    for (std::size_t j = 0; j < 2; j ++) {
         cu_red[j] = PrimeReduce(n, k, 2*k-2, p, 4*n + 3*LOGK + 4);
-        for(var i=0; i<3*k-2; i++){
+        for(std::size_t i=0; i<3*k-2; i++){
             if(i == 0) {
                 if(j == 0)
                     cu_red[j].in[i] <== x_cu.out[j][i] + a[0] * in[0][0][i] - a[1] * in[0][1][i] + b[j];
@@ -114,7 +114,7 @@ template PointOnCurveFp2(n, k, a, b, p){
     component y_sq_red[2]; // k registers < 2k^2*2^{3n} 
     for (int i = 0; i < 2; i ++) {
         y_sq_red[i] = PrimeReduce(n, k, k-1, p, 3*n + 2*LOGK + 1);
-        for(var j=0; j<2*k-1; j++){
+        for(std::size_t j=0; j<2*k-1; j++){
             y_sq_red[i].in[j] <== y_sq.out[i][j];
         }
     }
@@ -122,7 +122,7 @@ template PointOnCurveFp2(n, k, a, b, p){
     component constraint[2];
     constraint[0] = SignedCheckCarryModToZero(n, k, 4*n + LOGK3, p);
     constraint[1] = SignedCheckCarryModToZero(n, k, 4*n + LOGK3, p);
-    for(var i=0; i<k; i++){
+    for(std::size_t i=0; i<k; i++){
         constraint[0].in[i] <== cu_red[0].out[i] - y_sq_red[0].out[i]; 
         constraint[1].in[i] <== cu_red[1].out[i] - y_sq_red[1].out[i];
     }
@@ -136,33 +136,33 @@ template EllipticCurveFunction(n, k, a, b, p){
     signal input in[2][k]; 
     signal output out[2][k];
 
-    var LOGK = log_ceil(k);
-    var LOGK3 = log_ceil( (2*k-1)*(4*k*k) + 1 );
+    std::size_t LOGK = log_ceil(k);
+    std::size_t LOGK3 = log_ceil( (2*k-1)*(4*k*k) + 1 );
     assert(4*n + LOGK3 < 251);
 
     // compute x^3, y^2 
     component x_sq = SignedFp2MultiplyNoCarryUnequal(n, k, k, 2*n+1+LOGK); // 2k-1 registers in [0, 2*k*2^{2n}) 
     for (int i = 0; i < 2; i ++) {
-        for (var j = 0; j < k ; j ++) {
+        for (std::size_t j = 0; j < k ; j ++) {
             x_sq.a[i][j] <== in[i][j];
             x_sq.b[i][j] <== in[i][j];
         }
     }
     component x_cu = SignedFp2MultiplyNoCarryUnequal(n, 2*k-1, k, 3*n+2*LOGK+2); // 3k-2 registers in [0, 4*k^2 * 2^{3n}) 
     for (int i = 0; i < 2; i ++) {
-        for (var j = 0; j < 2*k-1; j ++) {
+        for (std::size_t j = 0; j < 2*k-1; j ++) {
             x_cu.a[i][j] <== x_sq.out[i][j];
         }
-        for (var j = 0; j < k; j ++) {
+        for (std::size_t j = 0; j < k; j ++) {
             x_cu.b[i][j] <== in[i][j];
         }
     }
 
     // x_cu + a x + b has 3k-2 registers < (4*k^2+1)2^{3n} 
     component cu_red[2];
-    for (var j = 0; j < 2; j ++) {
+    for (std::size_t j = 0; j < 2; j ++) {
         cu_red[j] = PrimeReduce(n, k, 2*k-2, p, 4*n + 3*LOGK + 4);
-        for(var i=0; i<3*k-2; i++){
+        for(std::size_t i=0; i<3*k-2; i++){
             if(i == 0) {
                 if(j == 0)
                     cu_red[j].in[i] <== x_cu.out[j][i] + a[0] * in[0][i] - a[1] * in[1][i] + b[j];
@@ -184,10 +184,10 @@ template EllipticCurveFunction(n, k, a, b, p){
     // cu_red has k registers < (2k-1)*(4*k^2+1)2^{4n} < 2^{4n + 3LOGK + 4}
 
     component carry = SignedFp2CarryModP(n, k, 4*n + LOGK3, p);
-    for(var j=0; j<2; j++)for(var i=0; i<k; i++)
+    for(std::size_t j=0; j<2; j++)for(std::size_t i=0; i<k; i++)
         carry.in[j][i] <== cu_red[j].out[i];
     
-    for(var j=0; j<2; j++)for(var i=0; i<k; i++)
+    for(std::size_t j=0; j<2; j++)for(std::size_t i=0; i<k; i++)
         out[j][i] <== carry.out[j][i];
 }
 
@@ -202,18 +202,18 @@ template EllipticCurveFunction(n, k, a, b, p){
 template PointOnTangentFp2(n, k, a, p){
     signal input in[2][2][2][k];
     
-    var LOGK = log_ceil(k);
-    var LOGK3 = log_ceil((2*k-1)*(12*k*k) + 1);
+    std::size_t LOGK = log_ceil(k);
+    std::size_t LOGK3 = log_ceil((2*k-1)*(12*k*k) + 1);
     assert(4*n + LOGK3 < 251);
     component x_sq = SignedFp2MultiplyNoCarryUnequal(n, k, k, 2*n+1+LOGK); // 2k-1 registers in [0, 2*k*2^{2n}) 
     for (int i = 0; i < 2; i ++) {
-        for (var j = 0; j < k ; j ++) {
+        for (std::size_t j = 0; j < k ; j ++) {
             x_sq.a[i][j] <== in[0][0][i][j];
             x_sq.b[i][j] <== in[0][0][i][j];
         }
     }
     component right = SignedFp2MultiplyNoCarryUnequal(n, 2*k-1, k, 3*n + 2*LOGK + 3); // 3k-2 registers < 2(6*k^2 + 2k/2^n)*2^{3n} 
-    for(var i=0; i<2*k-1; i++){
+    for(std::size_t i=0; i<2*k-1; i++){
         if(i == 0) {
             right.a[0][i] <== 3 * x_sq.out[0][i] + a[0]; // registers in [0, 3*k*2^{2n} + 2^n )  
             right.a[1][i] <== 3 * x_sq.out[1][i] + a[1];
@@ -223,13 +223,13 @@ template PointOnTangentFp2(n, k, a, p){
             right.a[1][i] <== 3 * x_sq.out[1][i];
         }
     }
-    for(var i=0; i<k; i++){
+    for(std::size_t i=0; i<k; i++){
         right.b[0][i] <== in[0][0][0][i] - in[1][0][0][i]; 
         right.b[1][i] <== in[0][0][1][i] - in[1][0][1][i];
     }
     
     component left = SignedFp2MultiplyNoCarryUnequal(n, k, k, 2*n + 3 + LOGK); // 2k-1 registers in [0, 8k * 2^{2n})
-    for(var i=0; i<k; i++){
+    for(std::size_t i=0; i<k; i++){
         left.a[0][i] <== 2*in[0][1][0][i];
         left.a[1][i] <== 2*in[0][1][1][i];
         left.b[0][i] <== in[0][1][0][i] + in[1][1][0][i];
@@ -240,7 +240,7 @@ template PointOnTangentFp2(n, k, a, p){
     component diff_red[2];
     for (int i = 0; i < 2; i ++) {
         diff_red[i] = PrimeReduce(n, k, 2*k-2, p, 4*n + LOGK3);
-        for (var j = 0; j < 3*k-2; j ++) {
+        for (std::size_t j = 0; j < 3*k-2; j ++) {
             if (j < 2*k-1) {
                 diff_red[i].in[j] <== right.out[i][j] - left.out[i][j];
             }
@@ -254,7 +254,7 @@ template PointOnTangentFp2(n, k, a, p){
     component constraint[2];
     for (int i = 0; i < 2; i ++) {
         constraint[i] = SignedCheckCarryModToZero(n, k, 4*n + LOGK3, p);
-        for (var j = 0; j < k; j ++) {
+        for (std::size_t j = 0; j < k; j ++) {
             constraint[i].in[j] <== diff_red[i].out[j];
         }
     }
@@ -280,22 +280,22 @@ template EllipticCurveAddUnequalFp2(n, k, p) {
 
     signal output out[2][2][k];
 
-    var LOGK = log_ceil(k);
-    var LOGK3 = log_ceil( (12*k*k)*(2*k-1) + 1); 
+    std::size_t LOGK = log_ceil(k);
+    std::size_t LOGK3 = log_ceil( (12*k*k)*(2*k-1) + 1);
     assert(4*n + LOGK3 + 2< 251);
 
     // precompute lambda and x_3 and then y_3
-    var dy[2][50] = find_Fp2_diff(n, k, b[1], a[1], p);
-    var dx[2][50] = find_Fp2_diff(n, k, b[0], a[0], p); 
-    var dx_inv[2][50] = find_Fp2_inverse(n, k, dx, p);
-    var lambda[2][50] = find_Fp2_product(n, k, dy, dx_inv, p);
-    var lambda_sq[2][50] = find_Fp2_product(n, k, lambda, lambda, p);
+    std::size_t dy[2][50] = find_Fp2_diff(n, k, b[1], a[1], p);
+    std::size_t dx[2][50] = find_Fp2_diff(n, k, b[0], a[0], p);
+    std::size_t dx_inv[2][50] = find_Fp2_inverse(n, k, dx, p);
+    std::size_t lambda[2][50] = find_Fp2_product(n, k, dy, dx_inv, p);
+    std::size_t lambda_sq[2][50] = find_Fp2_product(n, k, lambda, lambda, p);
     // out[0] = x_3 = lamb^2 - a[0] - b[0] % p
     // out[1] = y_3 = lamb * (a[0] - x_3) - a[1] % p
-    var x3[2][50] = find_Fp2_diff(n, k, find_Fp2_diff(n, k, lambda_sq, a[0], p), b[0], p);
-    var y3[2][50] = find_Fp2_diff(n, k, find_Fp2_product(n, k, lambda, find_Fp2_diff(n, k, a[0], x3, p), p), a[1], p);
+    std::size_t x3[2][50] = find_Fp2_diff(n, k, find_Fp2_diff(n, k, lambda_sq, a[0], p), b[0], p);
+    std::size_t y3[2][50] = find_Fp2_diff(n, k, find_Fp2_product(n, k, lambda, find_Fp2_diff(n, k, a[0], x3, p), p), a[1], p);
 
-    for(var i = 0; i < k; i++){
+    for(std::size_t i = 0; i < k; i++){
         out[0][0][i] <-- x3[0][i];
         out[0][1][i] <-- x3[1][i];
         out[1][0][i] <-- y3[0][i];
@@ -307,7 +307,7 @@ template EllipticCurveAddUnequalFp2(n, k, p) {
     component dx_sq = BigMultShortLong2D(n, k, 2); // 2k-1 registers abs val < 2k*2^{2n} 
     component dy_sq = BigMultShortLong2D(n, k, 2); // 2k-1 registers abs val < 2k*2^{2n}
     for (int i = 0; i < 2; i ++) {
-        for (var j = 0; j < k; j ++) {
+        for (std::size_t j = 0; j < k; j ++) {
             dx_sq.a[i][j] <== b[0][i][j] - a[0][i][j];
             dx_sq.b[i][j] <== b[0][i][j] - a[0][i][j];
             dy_sq.a[i][j] <== b[1][i][j] - a[1][i][j];
@@ -317,11 +317,11 @@ template EllipticCurveAddUnequalFp2(n, k, p) {
 
     // x_1 + x_2 + x_3 has registers in [0, 3*2^n) 
     component cubic = BigMultShortLong2DUnequal(n, k, 2*k-1, 2, 2); // 3k-2 x 3 registers < 12 * k^2 * 2^{3n} ) 
-    for(var i=0; i<k; i++) {
+    for(std::size_t i=0; i<k; i++) {
         cubic.a[0][i] <== a[0][0][i] + b[0][0][i] + out[0][0][i]; 
         cubic.a[1][i] <== a[0][1][i] + b[0][1][i] + out[0][1][i];
     }
-    for(var i=0; i<2*k-1; i++){
+    for(std::size_t i=0; i<2*k-1; i++){
         cubic.b[0][i] <== dx_sq.out[0][i] - dx_sq.out[2][i];
         cubic.b[1][i] <== dx_sq.out[1][i];
     }
@@ -329,12 +329,12 @@ template EllipticCurveAddUnequalFp2(n, k, p) {
     component cubic_red[2];
     cubic_red[0] = PrimeReduce(n, k, 2*k-2, p, 4*n + LOGK3 + 2);
     cubic_red[1] = PrimeReduce(n, k, 2*k-2, p, 4*n + LOGK3 + 2);
-    for(var i=0; i<2*k-1; i++) {
+    for(std::size_t i=0; i<2*k-1; i++) {
         // get i^2 parts too!
         cubic_red[0].in[i] <== cubic.out[0][i] - cubic.out[2][i] - dy_sq.out[0][i] + dy_sq.out[2][i]; // registers abs val < 12*k^2*2^{3n} + 2k*2^{2n} <= (12k^2 + 2k/2^n) * 2^{3n}
         cubic_red[1].in[i] <== cubic.out[1][i] - dy_sq.out[1][i]; // registers in < 12*k^2*2^{3n} + 4k*2^{2n} < (12k+1)k * 2^{3n} )
     }
-    for(var i=2*k-1; i<3*k-2; i++) {
+    for(std::size_t i=2*k-1; i<3*k-2; i++) {
         cubic_red[0].in[i] <== cubic.out[0][i] - cubic.out[2][i]; 
         cubic_red[1].in[i] <== cubic.out[1][i];
     }
@@ -343,7 +343,7 @@ template EllipticCurveAddUnequalFp2(n, k, p) {
     component cubic_mod[2];
     cubic_mod[0] = SignedCheckCarryModToZero(n, k, 4*n + LOGK3 + 2, p);
     cubic_mod[1] = SignedCheckCarryModToZero(n, k, 4*n + LOGK3 + 2, p);
-    for(var i=0; i<k; i++) {
+    for(std::size_t i=0; i<k; i++) {
         cubic_mod[0].in[i] <== cubic_red[0].out[i];
         cubic_mod[1].in[i] <== cubic_red[1].out[i];
     }
@@ -351,8 +351,8 @@ template EllipticCurveAddUnequalFp2(n, k, p) {
     
     // constrain y_3 by (y_1 + y_3) * (x_2 - x_1) = (y_2 - y_1)*(x_1 - x_3) mod p
     component y_constraint = PointOnLineFp2(n, k, p); 
-    for(var i = 0; i < k; i++)for(var j=0; j<2; j++){
-        for(var ind = 0; ind < 2; ind ++) {
+    for(std::size_t i = 0; i < k; i++)for(std::size_t j=0; j<2; j++){
+        for(std::size_t ind = 0; ind < 2; ind ++) {
             y_constraint.in[0][j][ind][i] <== a[j][ind][i];
             y_constraint.in[1][j][ind][i] <== b[j][ind][i];
             y_constraint.in[2][j][ind][i] <== out[j][ind][i];
@@ -364,7 +364,7 @@ template EllipticCurveAddUnequalFp2(n, k, p) {
     component range_check[2];
     range_check[0] = RangeCheck2D(n, k);
     range_check[1] = RangeCheck2D(n, k);
-    for(var j=0; j<2; j++)for(var i=0; i<k; i++) {
+    for(std::size_t j=0; j<2; j++)for(std::size_t i=0; i<k; i++) {
         range_check[0].in[j][i] <== out[0][j][i];
         range_check[1].in[j][i] <== out[1][j][i];
     }
@@ -392,13 +392,13 @@ template EllipticCurveDoubleFp2(n, k, a, b, p) {
     signal input in[2][2][k];
     signal output out[2][2][k];
 
-    var long_a[2][k];
-    var long_3[2][k];
+    std::size_t long_a[2][k];
+    std::size_t long_3[2][k];
     long_a[0][0] = a[0];
     long_3[0][0] = 3;
     long_a[1][0] = a[1];
     long_3[1][0] = 0;
-    for (var i = 1; i < k; i++) {
+    for (std::size_t i = 1; i < k; i++) {
         long_a[0][i] = 0;
         long_3[0][i] = 0;
         long_a[1][i] = 0;
@@ -406,15 +406,15 @@ template EllipticCurveDoubleFp2(n, k, a, b, p) {
     }
 
     // precompute lambda 
-    var lamb_num[2][50] = find_Fp2_sum(n, k, long_a, find_Fp2_product(n, k, long_3, find_Fp2_product(n, k, in[0], in[0], p), p), p);
-    var lamb_denom[2][50] = find_Fp2_sum(n, k, in[1], in[1], p);
-    var lamb[2][50] = find_Fp2_product(n, k, lamb_num, find_Fp2_inverse(n, k, lamb_denom, p), p);
+    std::size_t lamb_num[2][50] = find_Fp2_sum(n, k, long_a, find_Fp2_product(n, k, long_3, find_Fp2_product(n, k, in[0], in[0], p), p), p);
+    std::size_t lamb_denom[2][50] = find_Fp2_sum(n, k, in[1], in[1], p);
+    std::size_t lamb[2][50] = find_Fp2_product(n, k, lamb_num, find_Fp2_inverse(n, k, lamb_denom, p), p);
 
     // precompute x_3, y_3
-    var x3[2][50] = find_Fp2_diff(n, k, find_Fp2_product(n, k, lamb, lamb, p), find_Fp2_sum(n, k, in[0], in[0], p), p);
-    var y3[2][50] = find_Fp2_diff(n, k, find_Fp2_product(n, k, lamb, find_Fp2_diff(n, k, in[0], x3, p), p), in[1], p);
+    std::size_t x3[2][50] = find_Fp2_diff(n, k, find_Fp2_product(n, k, lamb, lamb, p), find_Fp2_sum(n, k, in[0], in[0], p), p);
+    std::size_t y3[2][50] = find_Fp2_diff(n, k, find_Fp2_product(n, k, lamb, find_Fp2_diff(n, k, in[0], x3, p), p), in[1], p);
     
-    for(var i=0; i<k; i++){
+    for(std::size_t i=0; i<k; i++){
         out[0][0][i] <-- x3[0][i];
         out[0][1][i] <-- x3[1][i];
         out[1][0][i] <-- y3[0][i];
@@ -424,13 +424,13 @@ template EllipticCurveDoubleFp2(n, k, a, b, p) {
     component range_check[2];
     range_check[0] = RangeCheck2D(n, k);
     range_check[1] = RangeCheck2D(n, k);
-    for(var j=0; j<2; j++)for(var i=0; i<k; i++) {
+    for(std::size_t j=0; j<2; j++)for(std::size_t i=0; i<k; i++) {
         range_check[0].in[j][i] <== out[0][j][i];
         range_check[1].in[j][i] <== out[1][j][i];
     }
 
     component point_on_tangent = PointOnTangentFp2(n, k, a, p);
-    for(var j=0; j<2; j++)for(var i=0; i<k; i++){
+    for(std::size_t j=0; j<2; j++)for(std::size_t i=0; i<k; i++){
         point_on_tangent.in[0][j][0][i] <== in[j][0][i];
         point_on_tangent.in[0][j][1][i] <== in[j][1][i];
         point_on_tangent.in[1][j][0][i] <== out[j][0][i];
@@ -438,13 +438,13 @@ template EllipticCurveDoubleFp2(n, k, a, b, p) {
     }
     
     component point_on_curve = PointOnCurveFp2(n, k, a, b, p);
-    for(var j=0; j<2; j++)for(var i=0; i<k; i++) {
+    for(std::size_t j=0; j<2; j++)for(std::size_t i=0; i<k; i++) {
         point_on_curve.in[j][0][i] <== out[j][0][i];
         point_on_curve.in[j][1][i] <== out[j][1][i];
     }
     
     component x3_eq_x1 = Fp2IsEqual(n, k, p);
-    for(var j=0; j<2; j++)for(var i = 0; i < k; i++){
+    for(std::size_t j=0; j<2; j++)for(std::size_t i = 0; i < k; i++){
         x3_eq_x1.a[j][i] <== out[0][j][i];
         x3_eq_x1.b[j][i] <== in[0][j][i];
     }
@@ -467,7 +467,7 @@ template EllipticCurveAddFp2(n, k, a2, b2, p){
     component x_equal = Fp2IsEqual(n, k, p);
     component y_equal = Fp2IsEqual(n, k, p);
 
-    for(var i=0; i<2; i++)for(var idx=0; idx<k; idx++){
+    for(std::size_t i=0; i<2; i++)for(std::size_t idx=0; idx<k; idx++){
         x_equal.a[i][idx] <== a[0][i][idx];
         x_equal.b[i][idx] <== b[0][i][idx];
 
@@ -487,7 +487,7 @@ template EllipticCurveAddFp2(n, k, a2, b2, p){
     
     component add = EllipticCurveAddUnequalFp2(n, k, p);
     component doub = EllipticCurveDoubleFp2(n, k, a2, b2, p);
-    for(var i=0; i<2; i++)for(var j=0; j<2; j++)for(var idx=0; idx<k; idx++){
+    for(std::size_t i=0; i<2; i++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++){
         add.a[i][j][idx] <== a[i][j][idx];
         if(i==0 && j==0 && idx==0)
             add.b[i][j][idx] <== b[i][j][idx] + x_equal.out * (iz.out - b[i][j][idx]); 
@@ -509,7 +509,7 @@ template EllipticCurveAddFp2(n, k, a2, b2, p){
     isInfinity <== ab0 + inverse - ab0 * inverse; // OR gate
 
     signal tmp[3][2][2][k]; 
-    for(var i=0; i<2; i++)for(var j=0; j<2; j++)for(var idx=0; idx<k; idx++){
+    for(std::size_t i=0; i<2; i++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++){
         tmp[0][i][j][idx] <== add.out[i][j][idx] + add_is_double * (doub.out[i][j][idx] - add.out[i][j][idx]); 
         // if a = O, then a + b = b 
         tmp[1][i][j][idx] <== tmp[0][i][j][idx] + aIsInfinity * (b[i][j][idx] - tmp[0][i][j][idx]);
@@ -539,11 +539,11 @@ template EllipticCurveScalarMultiplyFp2(n, k, b, x, p){
     signal output out[2][2][k];
     signal output isInfinity;
 
-    var LOGK = log_ceil(k);
+    std::size_t LOGK = log_ceil(k);
         
-    var Bits[250]; 
-    var BitLength;
-    var SigBits=0;
+    std::size_t Bits[250];
+    std::size_t BitLength;
+    std::size_t SigBits=0;
     for (int i = 0; i < 250; i++) {
         Bits[i] = (x >> i) & 1;
         if(Bits[i] == 1){
@@ -556,33 +556,33 @@ template EllipticCurveScalarMultiplyFp2(n, k, b, x, p){
     signal R_isO[BitLength]; 
     component Pdouble[BitLength];
     component Padd[SigBits];
-    var curid=0;
+    std::size_t curid=0;
 
     // if in = O then [x]O = O so there's no point to any of this
     signal P[2][2][k];
-    for(var j=0; j<2; j++)for(var idx=0; idx<k; idx++)for(var l=0; l<2; l++)
+    for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)for(std::size_t l=0; l<2; l++)
         P[j][l][idx] <== in[j][l][idx];
     
-    for(var i=BitLength - 1; i>=0; i--){
+    for(std::size_t i=BitLength - 1; i>=0; i--){
         if( i == BitLength - 1 ){
-            for(var j=0; j<2; j++)for(var idx=0; idx<k; idx++)for(var l=0; l<2; l++){
+            for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)for(std::size_t l=0; l<2; l++){
                 R[i][j][l][idx] <== P[j][l][idx];
             }
             R_isO[i] <== 0; 
         }else{
             // E2(Fp2) has no points of order 2, so the only way 2*R[i+1] = O is if R[i+1] = O 
             Pdouble[i] = EllipticCurveDoubleFp2(n, k, [0,0], b, p);  
-            for(var j=0; j<2; j++)for(var idx=0; idx<k; idx++)for(var l=0; l<2; l++)
+            for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)for(std::size_t l=0; l<2; l++)
                 Pdouble[i].in[j][l][idx] <== R[i+1][j][l][idx]; 
             
             if(Bits[i] == 0){
-                for(var j=0; j<2; j++)for(var idx=0; idx<k; idx++)for(var l=0; l<2; l++)
+                for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)for(std::size_t l=0; l<2; l++)
                     R[i][j][l][idx] <== Pdouble[i].out[j][l][idx];
                 R_isO[i] <== R_isO[i+1]; 
             }else{
                 // Padd[curid] = Pdouble[i] + P 
                 Padd[curid] = EllipticCurveAddFp2(n, k, [0,0], b, p); 
-                for(var j=0; j<2; j++)for(var l=0; l<2; l++)for(var idx=0; idx<k; idx++){
+                for(std::size_t j=0; j<2; j++)for(std::size_t l=0; l<2; l++)for(std::size_t idx=0; idx<k; idx++){
                     Padd[curid].a[j][l][idx] <== Pdouble[i].out[j][l][idx]; 
                     Padd[curid].b[j][l][idx] <== P[j][l][idx];
                 }
@@ -590,7 +590,7 @@ template EllipticCurveScalarMultiplyFp2(n, k, b, x, p){
                 Padd[curid].bIsInfinity <== 0;
 
                 R_isO[i] <== Padd[curid].isInfinity; 
-                for(var j=0; j<2; j++)for(var l=0; l<2; l++)for(var idx=0; idx<k; idx++){
+                for(std::size_t j=0; j<2; j++)for(std::size_t l=0; l<2; l++)for(std::size_t idx=0; idx<k; idx++){
                     R[i][j][l][idx] <== Padd[curid].out[j][l][idx];
                 }
                 curid++;
@@ -599,7 +599,7 @@ template EllipticCurveScalarMultiplyFp2(n, k, b, x, p){
     }
     // output = O if input = O or R[0] = O 
     isInfinity <== inIsInfinity + R_isO[0] - inIsInfinity * R_isO[0]; 
-    for(var i=0; i<2; i++)for(var j=0; j<2; j++)for(var idx=0; idx<k; idx++)
+    for(std::size_t i=0; i<2; i++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
         out[i][j][idx] <== R[0][i][j][idx] + isInfinity * (in[i][j][idx] - R[0][i][j][idx]);
 }
 
@@ -617,11 +617,11 @@ template EllipticCurveScalarMultiplyUnequalFp2(n, k, b, x, p){
     signal input in[2][2][k];
     signal output out[2][2][k];
 
-    var LOGK = log_ceil(k);
+    std::size_t LOGK = log_ceil(k);
         
-    var Bits[250]; 
-    var BitLength;
-    var SigBits=0;
+    std::size_t Bits[250];
+    std::size_t BitLength;
+    std::size_t SigBits=0;
     for (int i = 0; i < 250; i++) {
         Bits[i] = (x >> i) & 1;
         if(Bits[i] == 1){
@@ -634,27 +634,27 @@ template EllipticCurveScalarMultiplyUnequalFp2(n, k, b, x, p){
     component Pdouble[BitLength];
     component Padd[SigBits];
     component add_exception[SigBits];
-    var curid=0;
+    std::size_t curid=0;
 
-    for(var i=BitLength - 1; i>=0; i--){
+    for(std::size_t i=BitLength - 1; i>=0; i--){
         if( i == BitLength - 1 ){
-            for(var j=0; j<2; j++)for(var idx=0; idx<k; idx++)for(var l=0; l<2; l++){
+            for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)for(std::size_t l=0; l<2; l++){
                 R[i][j][l][idx] <== in[j][l][idx];
             }
         }else{
             // Assuming E2 has no points of order 2, so double never fails 
             // To remove this assumption, just add a check that Pdouble[i].y != 0
             Pdouble[i] = EllipticCurveDoubleFp2(n, k, [0,0], b, p);  
-            for(var j=0; j<2; j++)for(var idx=0; idx<k; idx++)for(var l=0; l<2; l++)
+            for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)for(std::size_t l=0; l<2; l++)
                 Pdouble[i].in[j][l][idx] <== R[i+1][j][l][idx]; 
             
             if(Bits[i] == 0){
-                for(var j=0; j<2; j++)for(var idx=0; idx<k; idx++)for(var l=0; l<2; l++)
+                for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)for(std::size_t l=0; l<2; l++)
                     R[i][j][l][idx] <== Pdouble[i].out[j][l][idx];
             }else{
                 // Constrain Pdouble[i].x != P.x 
                 add_exception[curid] = Fp2IsEqual(n, k, p);
-                for(var j=0; j<2; j++)for(var idx=0; idx<k; idx++){
+                for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++){
                     add_exception[curid].a[j][idx] <== Pdouble[i].out[0][j][idx];
                     add_exception[curid].b[j][idx] <== in[0][j][idx];
                 }
@@ -662,18 +662,18 @@ template EllipticCurveScalarMultiplyUnequalFp2(n, k, b, x, p){
         
                 // Padd[curid] = Pdouble[i] + P 
                 Padd[curid] = EllipticCurveAddUnequalFp2(n, k, p); 
-                for(var j=0; j<2; j++)for(var l=0; l<2; l++)for(var idx=0; idx<k; idx++){
+                for(std::size_t j=0; j<2; j++)for(std::size_t l=0; l<2; l++)for(std::size_t idx=0; idx<k; idx++){
                     Padd[curid].a[j][l][idx] <== Pdouble[i].out[j][l][idx]; 
                     Padd[curid].b[j][l][idx] <== in[j][l][idx];
                 }
-                for(var j=0; j<2; j++)for(var l=0; l<2; l++)for(var idx=0; idx<k; idx++){
+                for(std::size_t j=0; j<2; j++)for(std::size_t l=0; l<2; l++)for(std::size_t idx=0; idx<k; idx++){
                     R[i][j][l][idx] <== Padd[curid].out[j][l][idx];
                 }
                 curid++;
             }
         }
     }
-    for(var i=0; i<2; i++)for(var j=0; j<2; j++)for(var idx=0; idx<k; idx++)
+    for(std::size_t i=0; i<2; i++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
         out[i][j][idx] <== R[0][i][j][idx];
 }
 

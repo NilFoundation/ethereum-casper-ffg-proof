@@ -31,25 +31,25 @@ std::array<std::array<std::array<std::size_t, 7>, M>, COUNT> HashToField(const s
 
     signal bytesLE[COUNT][M][L];
     for (int i = 0; i < COUNT; i++) {
-        for (var j = 0; j < M; j++) {
-            for (var k = 0; k < L; k++) {
+        for (std::size_t j = 0; j < M; j++) {
+            for (std::size_t k = 0; k < L; k++) {
                 tmp = expandMessageXMD.out[i * M * L + j * L + L - 1 - k];
                 bytesLE[i][j][k] = tmp;
             }
         }
     }
 
-    var bytesToRegisters[COUNT][M][NUM_REGISTERS];
+    std::size_t bytesToRegisters[COUNT][M][NUM_REGISTERS];
     component byteToBits[COUNT][M][NUM_REGISTERS];
     component bitsToNum[COUNT][M][NUM_REGISTERS][2];
     for (int i = 0; i < COUNT; i++) {
-        for (var j = 0; j < M; j++) {
-            for (var l = 0; l < NUM_REGISTERS; l++) {
+        for (std::size_t j = 0; j < M; j++) {
+            for (std::size_t l = 0; l < NUM_REGISTERS; l++) {
                 bytesToRegisters[i][j][l] = 0;
             }
-            var curBits = 0;
-            var idx = 0;
-            for (var k = 0; k < L; k++) {
+            std::size_t curBits = 0;
+            std::size_t idx = 0;
+            for (std::size_t k = 0; k < L; k++) {
                 if (curBits + 8 <= BITS_PER_REGISTER) {
                     tmp = bytesLE[i][j][k] * (1 << curBits);
                     bytesToRegisters[i][j][idx] += tmp;
@@ -59,19 +59,19 @@ std::array<std::array<std::array<std::size_t, 7>, M>, COUNT> HashToField(const s
                         idx++;
                     }
                 } else {
-                    var bits1 = BITS_PER_REGISTER - curBits;
-                    var bits2 = 8 - bits1;
+                    std::size_t bits1 = BITS_PER_REGISTER - curBits;
+                    std::size_t bits2 = 8 - bits1;
                     byteToBits[i][j][idx] = Num2Bits(8);
                     byteToBits[i][j][idx].in <= = bytesLE[i][j][k];
 
                     bitsToNum[i][j][idx][0] = Bits2Num(bits1);
-                    for (var bit = 0; bit < bits1; bit++) {
+                    for (std::size_t bit = 0; bit < bits1; bit++) {
                         tmp = byteToBits[i][j][idx].out[bit];
                         bitsToNum[i][j][idx][0].in[bit] <= = tmp;
                     }
 
                     bitsToNum[i][j][idx][1] = Bits2Num(bits2);
-                    for (var bit = 0; bit < bits2; bit++) {
+                    for (std::size_t bit = 0; bit < bits2; bit++) {
                         tmp = byteToBits[i][j][idx].out[bits1 + bit];
                         bitsToNum[i][j][idx][1].in[bit] <= = tmp;
                     }
@@ -89,8 +89,8 @@ std::array<std::array<std::array<std::size_t, 7>, M>, COUNT> HashToField(const s
 
     signal bytesToBigInt[COUNT][M][NUM_REGISTERS];
     for (int i = 0; i < COUNT; i++) {
-        for (var j = 0; j < M; j++) {
-            for (var idx = 0; idx < NUM_REGISTERS; idx++) {
+        for (std::size_t j = 0; j < M; j++) {
+            for (std::size_t idx = 0; idx < NUM_REGISTERS; idx++) {
                 bytesToBigInt[i][j][idx] = bytesToRegisters[i][j][idx];
             }
         }
@@ -99,13 +99,13 @@ std::array<std::array<std::array<std::size_t, 7>, M>, COUNT> HashToField(const s
     component red[COUNT][M];
     component modders[COUNT][M];
     for (int i = 0; i < COUNT; i++) {
-        for (var j = 0; j < M; j++) {
+        for (std::size_t j = 0; j < M; j++) {
             red[i][j] = PrimeReduce(BITS_PER_REGISTER, 7, NUM_REGISTERS - 7, P, LOG_EXTRA + (2 * BITS_PER_REGISTER));
-            for (var k = 0; k < NUM_REGISTERS; k++) {
+            for (std::size_t k = 0; k < NUM_REGISTERS; k++) {
                 red[i][j].in[k] = bytesToBigInt[i][j][k];
             }
             modders[i][j] = SignedFpCarryModP(BITS_PER_REGISTER, 7, LOG_EXTRA + (2 * BITS_PER_REGISTER), P);
-            for (var k = 0; k < 7; k++) {
+            for (std::size_t k = 0; k < 7; k++) {
                 modders[i][j].in[k] = red[i][j].out[k];
             }
         }
@@ -113,8 +113,8 @@ std::array<std::array<std::array<std::size_t, 7>, M>, COUNT> HashToField(const s
 
     signal output out[COUNT][M][7];
     for (int i = 0; i < COUNT; i++) {
-        for (var j = 0; j < M; j++) {
-            for (var k = 0; k < 7; k++) {
+        for (std::size_t j = 0; j < M; j++) {
+            for (std::size_t k = 0; k < 7; k++) {
                 out[i][j][k] = modders[i][j].out[k];
             }
         }
@@ -142,7 +142,7 @@ std::array<std::size_t, EXPANDED_LEN> ExpandMessageXMD(const std::array<std::siz
     i2ospLibStr.in = EXPANDED_LEN;
 
     // b_0 = sha256(Z_pad || msg || l_i_b_str || i2osp(0, 1) || DST_prime)
-    var S256_0_INPUT_BYTE_LEN = R_IN_BYTES + MSG_LEN + 2 + 1 + DST_LEN + 1;
+    std::size_t S256_0_INPUT_BYTE_LEN = R_IN_BYTES + MSG_LEN + 2 + 1 + DST_LEN + 1;
     component sha0 = Sha256Bytes(S256_0_INPUT_BYTE_LEN);
     for (int i = 0; i < S256_0_INPUT_BYTE_LEN; i++) {
         if (i < R_IN_BYTES) {
@@ -160,7 +160,7 @@ std::array<std::size_t, EXPANDED_LEN> ExpandMessageXMD(const std::array<std::siz
 
     // b[0] = sha256(s256_0.out || i2osp(1, 1) || dst_prime)
     component s256s[ELL];
-    var S256S_0_INPUT_BYTE_LEN = B_IN_BYTES + 1 + DST_LEN + 1;
+    std::size_t S256S_0_INPUT_BYTE_LEN = B_IN_BYTES + 1 + DST_LEN + 1;
     s256s[0] = Sha256Bytes(S256S_0_INPUT_BYTE_LEN);
     for (int i = 0; i < S256S_0_INPUT_BYTE_LEN; i++) {
         if (i < B_IN_BYTES) {
@@ -175,9 +175,9 @@ std::array<std::size_t, EXPANDED_LEN> ExpandMessageXMD(const std::array<std::siz
     // sha256(b[0] XOR b[i-1] || i2osp(i+1, 1) || dst_prime)
     component arrayXOR[ELL - 1];
     component i2ospIndex[ELL - 1];
-    for (var i = 1; i < ELL; i++) {
+    for (std::size_t i = 1; i < ELL; i++) {
         arrayXOR[i - 1] = ByteArrayXOR(B_IN_BYTES);
-        for (var j = 0; j < B_IN_BYTES; j++) {
+        for (std::size_t j = 0; j < B_IN_BYTES; j++) {
             arrayXOR[i - 1].a[j] = sha0.out[j];
             arrayXOR[i - 1].b[j] = s256s[i - 1].out[j];
         }
@@ -185,9 +185,9 @@ std::array<std::size_t, EXPANDED_LEN> ExpandMessageXMD(const std::array<std::siz
         i2ospIndex[i - 1] = I2OSP(1);
         i2ospIndex[i - 1].in = i + 1;
 
-        var S256S_INPUT_BYTE_LEN = S256S_0_INPUT_BYTE_LEN;
+        std::size_t S256S_INPUT_BYTE_LEN = S256S_0_INPUT_BYTE_LEN;
         s256s[i] = Sha256Bytes(S256S_INPUT_BYTE_LEN);
-        for (var j = 0; j < S256S_INPUT_BYTE_LEN; j++) {
+        for (std::size_t j = 0; j < S256S_INPUT_BYTE_LEN; j++) {
             if (j < B_IN_BYTES) {
                 s256s[i].in[j] = arrayXOR[i - 1].out[j];
             } else if (j < B_IN_BYTES + 1) {
@@ -216,7 +216,7 @@ std::array<std::size_t, n> ByteArrayXOR(const std::array<std::size_t, n> &a, con
 
     signal xorBits[n][8];
     for (int i = 0; i < n; i++) {
-        for (var j = 0; j < 8; j++) {
+        for (std::size_t j = 0; j < 8; j++) {
             xorBits[i][j] <=
                 = bitifiersA[i].out[j] + bitifiersB[i].out[j] - 2 * bitifiersA[i].out[j] * bitifiersB[i].out[j];
         }
@@ -225,7 +225,7 @@ std::array<std::size_t, n> ByteArrayXOR(const std::array<std::size_t, n> &a, con
     component byteifiers[n];
     for (int i = 0; i < n; i++) {
         byteifiers[i] = Bits2Num(8);
-        for (var j = 0; j < 8; j++) {
+        for (std::size_t j = 0; j < 8; j++) {
             byteifiers[i].in[j] = xorBits[i][j];
         }
     }
