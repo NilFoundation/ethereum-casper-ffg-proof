@@ -85,18 +85,18 @@ SSZPhase0SyncCommittee(const std::array<std::array<std::size_t, SYNC_COMMITTEE_S
     component sszAggregatePubkey = SSZArray(64, 1);
     for (int i = 0; i < 64; i++) {
         if (i < G1_POINT_SIZE) {
-            sszAggregatePubkey.in[i] <= = aggregatePubkey[i];
+            sszAggregatePubkey.in[i] = aggregatePubkey[i];
         } else {
-            sszAggregatePubkey.in[i] <= = 0;
+            sszAggregatePubkey.in[i] = 0;
         }
     }
 
     component hasher = Sha256Bytes(64);
     for (int i = 0; i < 64; i++) {
         if (i < 32) {
-            hasher.in[i] <= = sszPubkeys.out[i];
+            hasher.in[i] = sszPubkeys.out[i];
         } else {
-            hasher.in[i] <= = sszAggregatePubkey.out[i - 32];
+            hasher.in[i] = sszAggregatePubkey.out[i - 32];
         }
     }
 
@@ -110,20 +110,23 @@ std::array<std::size_t, 32> SSZPhase0BeaconBlockHeader(const std::array<std::siz
                                                        const std::array<std::size_t, 32> &parentRoot,
                                                        const std::array<std::size_t, 32> &stateRoot,
                                                        const std::array<std::size_t, 32> &bodyRoot) {
+    std::array<std::size_t, 32> sszPubkeys;
+    std::array<std::size_t, SYNC_COMMITTEE_SIZE * 64> sszPubkeysIn;
+
     component sszBeaconBlockHeader = SSZArray(256, 3);
     for (int i = 0; i < 256; i++) {
         if (i < 32) {
-            sszBeaconBlockHeader.in[i] <= = slot[i];
+            sszBeaconBlockHeader.in[i] = slot[i];
         } else if (i < 64) {
-            sszBeaconBlockHeader.in[i] <= = proposerIndex[i - 32];
+            sszBeaconBlockHeader.in[i] = proposerIndex[i - 32];
         } else if (i < 96) {
-            sszBeaconBlockHeader.in[i] <= = parentRoot[i - 64];
+            sszBeaconBlockHeader.in[i] = parentRoot[i - 64];
         } else if (i < 128) {
-            sszBeaconBlockHeader.in[i] <= = stateRoot[i - 96];
+            sszBeaconBlockHeader.in[i] = stateRoot[i - 96];
         } else if (i < 160) {
-            sszBeaconBlockHeader.in[i] <= = bodyRoot[i - 128];
+            sszBeaconBlockHeader.in[i] = bodyRoot[i - 128];
         } else {
-            sszBeaconBlockHeader.in[i] <= = 0;
+            sszBeaconBlockHeader.in[i] = 0;
         }
     }
 
@@ -136,15 +139,15 @@ std::array<std::size_t, 32> SSZPhase0SigningRoot(const std::array<std::size_t, 3
                                                  const std::array<std::size_t, 32> &domain) {
     component sha256 = Sha256Bytes(64);
     for (int i = 0; i < 32; i++) {
-        sha256.in[i] <= = headerRoot[i];
+        sha256.in[i] = headerRoot[i];
     }
 
     for (std::size_t i = 32; i < 64; i++) {
-        sha256.in[i] <= = domain[i - 32];
+        sha256.in[i] = domain[i - 32];
     }
 
     for (int i = 0; i < 32; i++) {
-        out[i] <= = sha256.out[i];
+        out[i] = sha256.out[i];
     }
 }
 

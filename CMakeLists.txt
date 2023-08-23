@@ -23,19 +23,19 @@ add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/libs/crypto3")
 
 cm_find_package(CM)
 
-cm_project(sync_committee WORKSPACE_NAME ${CMAKE_WORKSPACE_NAME} LANGUAGES ASM C CXX)
+cm_project(consensus_proof WORKSPACE_NAME ${CMAKE_WORKSPACE_NAME} LANGUAGES ASM C CXX)
 
 cm_setup_version(VERSION 0.1.0 PREFIX ${CMAKE_WORKSPACE_NAME}_${CMAKE_PROJECT_NAME})
 
 add_library(${CMAKE_WORKSPACE_NAME}_${CMAKE_PROJECT_NAME} OBJECT
-            include/ethereum/sync_committee/hash_to_field.hpp
-            include/ethereum/sync_committee/constants.hpp
+        include/ethereum/consensus_proof/hash_to_field.hpp
+        include/ethereum/consensus_proof/constants.hpp
+        include/ethereum/consensus_proof/inputs.hpp
+        include/ethereum/consensus_proof/ssz.hpp
+        include/ethereum/consensus_proof/consensus_proof.hpp
 
-        src/bls.cpp
-            include/ethereum/sync_committee/inputs.hpp
-            src/poseidon.cpp
-        include/ethereum/sync_committee/ssz.hpp
-        include/ethereum/sync_committee/sync_committee.hpp)
+        include/ethereum/consensus_proof/bls.cpp
+        include/ethereum/consensus_proof/poseidon.cpp)
 
 target_include_directories(${CMAKE_WORKSPACE_NAME}_${CMAKE_PROJECT_NAME} PUBLIC
                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -75,7 +75,7 @@ set_target_properties(${CMAKE_WORKSPACE_NAME}_${CMAKE_PROJECT_NAME} PROPERTIES
                       CXX_STANDARD 20
                       CXX_STANDARD_REQUIRED TRUE)
 
-add_library(${CMAKE_WORKSPACE_NAME}_${CMAKE_PROJECT_NAME}_step OBJECT
+add_executable(${CMAKE_WORKSPACE_NAME}_${CMAKE_PROJECT_NAME}_step
             src/step.cpp)
 
 target_include_directories(${CMAKE_WORKSPACE_NAME}_${CMAKE_PROJECT_NAME}_step PUBLIC
@@ -92,7 +92,7 @@ set_target_properties(${CMAKE_WORKSPACE_NAME}_${CMAKE_PROJECT_NAME}_step PROPERT
                       CXX_STANDARD 20
                       CXX_STANDARD_REQUIRED TRUE)
 
-add_library(${CMAKE_WORKSPACE_NAME}_${CMAKE_PROJECT_NAME}_rotate OBJECT
+add_executable(${CMAKE_WORKSPACE_NAME}_${CMAKE_PROJECT_NAME}_rotate
             src/rotate.cpp)
 
 target_include_directories(${CMAKE_WORKSPACE_NAME}_${CMAKE_PROJECT_NAME}_rotate PUBLIC

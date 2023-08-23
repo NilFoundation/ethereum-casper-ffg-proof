@@ -1,9 +1,9 @@
-#include <ethereum/sync_committee/constants.hpp>
-#include <ethereum/sync_committee/inputs.hpp>
-#include <ethereum/sync_committee/bls.hpp>
-#include <ethereum/sync_committee/poseidon.hpp>
-#include <ethereum/sync_committee/ssz.hpp>
-#include <ethereum/sync_committee/sync_committee.hpp>
+#include <ethereum/consensus_proof/constants.hpp>
+#include <ethereum/consensus_proof/inputs.hpp>
+#include <ethereum/consensus_proof/bls.hpp>
+#include <ethereum/consensus_proof/poseidon.hpp>
+#include <ethereum/consensus_proof/ssz.hpp>
+#include <ethereum/consensus_proof/sync_committee.hpp>
 
 /*
  * Maps the SSZ commitment of the sync committee's pubkeys to a SNARK friendly

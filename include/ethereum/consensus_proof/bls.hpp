@@ -1,9 +1,9 @@
-#include <ethereum/sync_committee/constants.hpp>
-#include <ethereum/sync_committee/inputs.hpp>
-#include <ethereum/sync_committee/bls.hpp>
-#include <ethereum/sync_committee/poseidon.hpp>
-#include <ethereum/sync_committee/ssz.hpp>
-#include <ethereum/sync_committee/sync_committee.hpp>
+#include "constants.hpp"
+#include "inputs.hpp"
+#include <ethereum/consensus_proof/bls.hpp>
+#include "poseidon.hpp"
+#include "ssz.hpp"
+#include <ethereum/consensus_proof/sync_committee.hpp>
 
 /*
  * This file efficiently implements BLS12-381 public key aggregation. It takes
@@ -54,7 +54,8 @@ void G1AddMany() {
     isPointAtInfinity <== 1 - reducers[LOG_2_SYNC_COMMITTEE_SIZE - 1].outBits[0];
 }
 
-template G1Reduce(BATCH_SIZE, N, K) {
+template<std::size_t BATCH_SIZE, std::size_t N, std::size_t K>
+void G1Reduce() {
     std::size_t OUTPUT_BATCH_SIZE = BATCH_SIZE \ 2;
     signal input pubkeys[BATCH_SIZE][2][K];
     signal input bits[BATCH_SIZE];
@@ -84,7 +85,8 @@ template G1Reduce(BATCH_SIZE, N, K) {
     }
 }
 
-template parallel G1Add(N, K) {
+template<std::size_t N, std::size_t K>
+void G1Add() {
     std::size_t A1 = CURVE_A1();
     std::size_t B1 = CURVE_B1();
     std::size_t P[7] = BLS128381_PRIME();
@@ -116,7 +118,8 @@ template parallel G1Add(N, K) {
     outBit*(outBit - 1) = 0;
 }
 
-template G1BytesToBigInt(N, K, G1_POINT_SIZE) {
+template<std::size_t N, std::size_t K, std::size_t G1_POINT_SIZE>
+void G1BytesToBigInt() {
     assert(G1_POINT_SIZE == 48);
     signal input in[G1_POINT_SIZE];
     signal output out[K];
@@ -155,7 +158,8 @@ template G1BytesToBigInt(N, K, G1_POINT_SIZE) {
     pubkeyBits[382] = 0;
 }
 
-template G1BytesToSignFlag(N, K, G1_POINT_SIZE) {
+template<std::size_t N, std::size_t K, std::size_t G1_POINT_SIZE>
+void G1BytesToSignFlag() {
     signal input in[G1_POINT_SIZE];
     signal output out;
 
@@ -177,7 +181,8 @@ template G1BytesToSignFlag(N, K, G1_POINT_SIZE) {
     out <== pubkeyBits[381];
 }
 
-template G1BigIntToSignFlag(N, K) {
+template<std::size_t N, std::size_t K>
+void G1BigIntToSignFlag() {
     signal input in[K];
     signal output out;
 
