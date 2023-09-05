@@ -23,28 +23,26 @@ add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/libs/crypto3")
 
 cm_find_package(CM)
 
-cm_project(consensus_proof WORKSPACE_NAME ${CMAKE_WORKSPACE_NAME} LANGUAGES ASM C CXX)
+cm_project(casper_ffg WORKSPACE_NAME ${CMAKE_WORKSPACE_NAME} LANGUAGES ASM C CXX)
 
 cm_setup_version(VERSION 0.1.0 PREFIX ${CMAKE_WORKSPACE_NAME}_${CMAKE_PROJECT_NAME})
 
-add_library(${CMAKE_WORKSPACE_NAME}_${CMAKE_PROJECT_NAME} OBJECT
+add_library(${CMAKE_WORKSPACE_NAME}_${CMAKE_PROJECT_NAME} INTERFACE
         include/ethereum/consensus_proof/hash_to_field.hpp
         include/ethereum/consensus_proof/constants.hpp
         include/ethereum/consensus_proof/inputs.hpp
         include/ethereum/consensus_proof/ssz.hpp
         include/ethereum/consensus_proof/consensus_proof.hpp
+        include/ethereum/consensus_proof/bls.hpp
+        include/ethereum/consensus_proof/poseidon.hpp)
 
-        include/ethereum/consensus_proof/bls.cpp
-        include/ethereum/consensus_proof/poseidon.cpp)
-
-target_include_directories(${CMAKE_WORKSPACE_NAME}_${CMAKE_PROJECT_NAME} PUBLIC
+target_include_directories(${CMAKE_WORKSPACE_NAME}_${CMAKE_PROJECT_NAME} INTERFACE
                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
                            $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>)
 
-target_link_libraries(${CMAKE_WORKSPACE_NAME}_${CMAKE_PROJECT_NAME} PUBLIC
+target_link_libraries(${CMAKE_WORKSPACE_NAME}_${CMAKE_PROJECT_NAME} INTERFACE
                       crypto3::algebra
                       crypto3::block
-                      crypto3::blueprint
                       crypto3::codec
                       crypto3::containers
                       crypto3::hash

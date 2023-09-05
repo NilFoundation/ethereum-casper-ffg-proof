@@ -7,7 +7,7 @@ include "fp2.cpp";
 include "fp12_func.circom";
 include "bls12_381_func.cpp";
 
-template Fp12FrobeniusMap(n, k, power){
+template<std::size_t n, std::size_t k, std::size_t power> void Fp12FrobeniusMap(){
     signal input in[6][2][k];
     signal output out[6][2][k];
 
@@ -70,7 +70,7 @@ template Fp12FrobeniusMap(n, k, power){
     }
 }
 
-template Fp12Add(n, k, p) {
+template<std::size_t n, std::size_t k, std::size_t p> void Fp12Add() {
     signal input a[6][2][k];
     signal input b[6][2][k];
     signal output out[6][2][k];
@@ -320,7 +320,7 @@ template SignedFp12MultiplyNoCarryCompress(n, k, p, m_in, m_out) {
 // solve for: in = X * p + out
 // X has Ceil( overflow / n ) registers, lying in [-2^n, 2^n)
 // assume in has registers in [0, 2^overflow)
-template SignedFp12CarryModP(n, k, overflow, p) {
+template<std::size_t n, std::size_t k, std::size_t overflow, std::size_t p> void SignedFp12CarryModP() {
     std::size_t l = 6;
     std::size_t m = (overflow + n - 1) \ n;
     signal input in[l][2][k];
@@ -345,7 +345,7 @@ template SignedFp12CarryModP(n, k, overflow, p) {
 // version of Fp12Multiply that uses the prime reduction trick
 // takes longer to compile
 // assumes p has k registers with kth register nonzero
-template Fp12Multiply(n, k, p) {
+template<std::size_t n, std::size_t k, std::size_t p> void Fp12Multiply() {
     std::size_t l = 6;
     std::size_t XI0 = 1;
     signal input a[l][2][k];
@@ -375,7 +375,7 @@ template Fp12Multiply(n, k, p) {
 }
 
 // unoptimized squaring, just takes two elements of Fp12 and multiplies them
-template Fp12Square(n, k, p) {
+template<std::size_t n, std::size_t k, std::size_t p> void Fp12Square() {
     signal input in[6][2][k];
     signal output out[6][2][k];
 
@@ -397,7 +397,7 @@ template Fp12Square(n, k, p) {
 
 
 // not actually a relevant circuit - this only exists to test find_Fp6_inverse
-template Fp6Invert(n, k, p) {
+template<std::size_t n, std::size_t k, std::size_t p> void Fp6Invert() {
     signal input a0[2][k];
     signal input a1[2][k];
     signal input a2[2][k];
@@ -414,7 +414,7 @@ template Fp6Invert(n, k, p) {
 
 // Call find_Fp12_inverse to compute inverse
 // Then check out * in = 1, out is an array of shorts
-template Fp12Invert(n, k, p){
+template<std::size_t n, std::size_t k, std::size_t p> void Fp12Invert(){
     assert(k < 50);
     signal input in[6][2][k];
     signal output out[6][2][k];
@@ -452,7 +452,7 @@ template Fp12Invert(n, k, p){
 // output is input raised to the e-th power
 // use the square and multiply method
 // assume 0 < e < 2^254
-template Fp12Exp(n, k, e, p) {
+template<std::size_t n, std::size_t k, std::size_t e, std::size_t p> void Fp12Exp() {
     assert( e > 0 );
 
     signal input in[6][2][k];

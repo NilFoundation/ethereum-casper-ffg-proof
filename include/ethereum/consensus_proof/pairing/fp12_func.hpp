@@ -1,5 +1,3 @@
-pragma circom 2.0.3;
-
 function find_Fp12_sum(n, k, a, b, p) {
     std::size_t out[6][2][50];
     for(std::size_t i=0; i<6; i++)

@@ -101,7 +101,7 @@ SSZPhase0SyncCommittee(const std::array<std::array<std::size_t, SYNC_COMMITTEE_S
     }
 
     for (int i = 0; i < 32; i++) {
-        out[i] <= = hasher.out[i];
+        out[i] = hasher.out[i];
     }
 }
 
@@ -131,7 +131,7 @@ std::array<std::size_t, 32> SSZPhase0BeaconBlockHeader(const std::array<std::siz
     }
 
     for (int i = 0; i < 32; i++) {
-        out[i] <= = sszBeaconBlockHeader.out[i];
+        out[i] = sszBeaconBlockHeader.out[i];
     }
 }
 

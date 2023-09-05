@@ -117,7 +117,8 @@ std::array<std::size_t, EXPANDED_LEN> ExpandMessageXMD(const std::array<std::siz
 }
 
 template<std::size_t MSG_LEN, std::size_t COUNT = 2>
-std::array<std::array<std::array<std::size_t, 7>, MSG_LEN>, COUNT> HashToField(const std::array<std::size_t, MSG_LEN> &msg) {
+std::array<std::array<std::array<std::size_t, 7>, MSG_LEN>, COUNT>
+HashToField(const std::array<std::size_t, MSG_LEN> &msg) {
     std::array<std::size_t, 7> P = BLS128381_PRIME;
     std::size_t LOG2P = 381;
     std::size_t M = 2;
@@ -169,18 +170,18 @@ std::array<std::array<std::array<std::size_t, 7>, MSG_LEN>, COUNT> HashToField(c
                     std::size_t bits1 = BITS_PER_REGISTER - curBits;
                     std::size_t bits2 = 8 - bits1;
                     byteToBits[i][j][idx] = Num2Bits(8);
-                    byteToBits[i][j][idx].in <= = bytesLE[i][j][k];
+                    byteToBits[i][j][idx].in = bytesLE[i][j][k];
 
                     bitsToNum[i][j][idx][0] = Bits2Num(bits1);
                     for (std::size_t bit = 0; bit < bits1; bit++) {
                         tmp = byteToBits[i][j][idx].out[bit];
-                        bitsToNum[i][j][idx][0].in[bit] <= = tmp;
+                        bitsToNum[i][j][idx][0].in[bit] = tmp;
                     }
 
                     bitsToNum[i][j][idx][1] = Bits2Num(bits2);
                     for (std::size_t bit = 0; bit < bits2; bit++) {
                         tmp = byteToBits[i][j][idx].out[bits1 + bit];
-                        bitsToNum[i][j][idx][1].in[bit] <= = tmp;
+                        bitsToNum[i][j][idx][1].in[bit] = tmp;
                     }
 
                     tmp = bitsToNum[i][j][idx][0].out * (1 << curBits);
@@ -218,7 +219,7 @@ std::array<std::array<std::array<std::size_t, 7>, MSG_LEN>, COUNT> HashToField(c
         }
     }
 
-    signal output out[COUNT][M][7];
+    std::array<std::array<std::array<std::size_t, 7>, MSG_LEN>, COUNT> out[COUNT][M][7];
     for (int i = 0; i < COUNT; i++) {
         for (std::size_t j = 0; j < M; j++) {
             for (std::size_t k = 0; k < 7; k++) {

@@ -1,198 +1,196 @@
-pragma circom 2.0.3;
-
-include "../../../node_modules/circomlib/circuits/comparators.circom";
-include "../../../node_modules/circomlib/circuits/bitify.circom";
-include "../../../node_modules/circomlib/circuits/gates.circom";
-
-include "bigint_func.cpp";
+#include <ethereum/consensus_proof/pairing/bigint_func.hpp>
 
 // addition mod 2**n with carry bit
-template ModSum(n) {
-    assert(n <= 252);
-    signal input a;
-    signal input b;
-    signal output sum;
-    signal output carry;
+template<std::size_t n>
+std::pair<std::size_t, std::size_t> ModSum(std::size_t a, std::size_t b) {
+    static_assert(n <= 252);
+
+    std::pair<std::size_t, std::size_t> result;
 
     component n2b = Num2Bits(n + 1);
-    n2b.in <= = a + b;
-    carry <= = n2b.out[n];
-    sum <= = a + b - carry * (1 << n);
+    n2b.in = a + b;
+    std::size_t carry = n2b.out[n];
+    std::size_t sum = a + b - carry * (1 << n);
+
+    return {sum, carry};
 }
 
 // check if k-register variables a, b are equal everywhere
-template BigIsEqual(k) {
-    signal input a[k];
-    signal input b[k];
-    signal output out;
+template<std::size_t k>
+std::size_t BigIsEqual(const std::array<std::size_t, k> &a, const std::array<std::size_t, k> &b) {
+    output out;
 
     component isEquals[k];
     std::size_t total = k;
     for (int i = 0; i < k; i++) {
         isEquals[i] = IsEqual();
-        isEquals[i].in[0] <= = a[i];
-        isEquals[i].in[1] <= = b[i];
+        isEquals[i].in[0] = a[i];
+        isEquals[i].in[1] = b[i];
         total -= isEquals[i].out;
     }
     component checkZero = IsZero();
-    checkZero.in <= = total;
-    out <= = checkZero.out;
+    checkZero.in = total;
+    out = checkZero.out;
+
+    return out;
 }
 
 // check if k-register variable a is equal to zero
-template BigIsZero(k) {
-    signal input in[k];
-    signal output out;
-
+template<std::size_t k>
+std::size_t BigIsZero(const std::array<std::size_t, k> &in) {
     component isZeros[k];
     std::size_t total = k;
     for (int i = 0; i < k; i++) {
         isZeros[i] = IsZero();
-        isZeros[i].in <= = in[i];
+        isZeros[i].in = in[i];
         total -= isZeros[i].out;
     }
     component checkZero = IsZero();
-    checkZero.in <= = total;
-    out <= = checkZero.out;
+    checkZero.in = total;
+    return checkZero.out;
 }
 
 // a - b
-template ModSub(n) {
+template<std::size_t n>
+std::size_t ModSub(std::size_t a, std::size_t b) {
     assert(n <= 252);
-    signal input a;
-    signal input b;
-    signal output out;
-    signal output borrow;
+
+    std::size_t out;
+    std::size_t borrow;
     component lt = LessThan(n);
-    lt.in[0] <= = a;
-    lt.in[1] <= = b;
-    borrow <= = lt.out;
-    out <= = borrow * (1 << n) + a - b;
+    lt.in[0] = a;
+    lt.in[1] = b;
+    borrow = lt.out;
+    return borrow * (1 << n) + a - b;
 }
 
 // a - b - c
 // assume a - b - c + 2**n >= 0
-template ModSubThree(n) {
+template<std::size_t n>
+std::pair<std::size_t, std::size_t> ModSubThree(std::size_t a, std::size_t b, std::size_t c) {
     assert(n + 2 <= 253);
-    signal input a;
-    signal input b;
-    signal input c;
     assert(a - b - c + (1 << n) >= 0);
-    signal output out;
-    signal output borrow;
-    signal b_plus_c;
-    b_plus_c <= = b + c;
+
+    std::size_t out;
+    std::size_t borrow;
+    std::size_t b_plus_c;
+    b_plus_c = b + c;
     component lt = LessThan(n + 1);
-    lt.in[0] <= = a;
-    lt.in[1] <= = b_plus_c;
-    borrow <= = lt.out;
-    out <= = borrow * (1 << n) + a - b_plus_c;
+    lt.in[0] = a;
+    lt.in[1] = b_plus_c;
+    borrow = lt.out;
+    out = borrow * (1 << n) + a - b_plus_c;
 }
 
-template ModSumThree(n) {
+template<std::size_t n>
+std::pair<std::size_t, std::size_t> ModSumThree(std::size_t a, std::size_t b, std::size_t c) {
     assert(n + 2 <= 253);
-    signal input a;
-    signal input b;
-    signal input c;
-    signal output sum;
-    signal output carry;
+
+    std::size_t sum;
+    std::size_t carry;
 
     component n2b = Num2Bits(n + 2);
-    n2b.in <= = a + b + c;
-    carry <= = n2b.out[n] + 2 * n2b.out[n + 1];
-    sum <= = a + b + c - carry * (1 << n);
+    n2b.in = a + b + c;
+    carry = n2b.out[n] + 2 * n2b.out[n + 1];
+    sum = a + b + c - carry * (1 << n);
+
+    return {sum, carry};
 }
 
 // product mod 2**n with carry
-template ModProd(n) {
+template<std::size_t n>
+std::pair<std::size_t, std::size_t> ModProd(std::size_t a, std::size_t b) {
     assert(n <= 126);
-    signal input a;
-    signal input b;
-    signal output prod;
-    signal output carry;
+    signal
+    output prod;
+    signal
+    output carry;
 
     component n2b = Num2Bits(2 * n);
-    n2b.in <= = a * b;
+    n2b.in = a * b;
 
     component b2n1 = Bits2Num(n);
     component b2n2 = Bits2Num(n);
     std::size_t i;
     for (i = 0; i < n; i++) {
-        b2n1.in[i] <= = n2b.out[i];
-        b2n2.in[i] <= = n2b.out[i + n];
+        b2n1.in[i] = n2b.out[i];
+        b2n2.in[i] = n2b.out[i + n];
     }
-    prod <= = b2n1.out;
-    carry <= = b2n2.out;
+    prod = b2n1.out;
+    carry = b2n2.out;
 }
 
 // split a n + m bit input into two outputs
-template Split(n, m) {
+template<std::size_t n, std::size_t m>
+std::pair<std::size_t, std::size_t> Split(std::size_t in) {
     assert(n + m < 254);
     assert(n <= 126);
-    signal input in;
-    signal output small;
-    signal output big;
 
-    small < --in % (1 << n);
-    big < --in \ (1 << n);
+    std::size_t small;
+    std::size_t big;
+
+    small = in % (1 << n);
+    big = in / (1 << n);
 
     component n2b_small = Num2Bits(n);
-    n2b_small.in <= = small;
+    n2b_small.in = small;
     component n2b_big = Num2Bits(m);
-    n2b_big.in <= = big;
+    n2b_big.in = big;
 
     in = small + big * (1 << n);
 }
 
 // split a n + m + k bit input into three outputs
-template SplitThree(n, m, k) {
+template<std::size_t n, std::size_t m, std::size_t k>
+std::tuple<std::size_t, std::size_t, std::size_t> SplitThree(std::size_t in) {
     assert(n + m + k < 254);
     assert(n <= 126);
-    signal input in;
-    signal output small;
-    signal output medium;
-    signal output big;
 
-    small < --in % (1 << n);
-    medium < --(in \ (1 << n)) % (1 << m);
-    big < --in \ (1 << n + m);
+    std::size_t small;
+    std::size_t medium;
+    std::size_t big;
+
+    small = in % (1 << n);
+    medium = (in / (1 << n)) % (1 << m);
+    big = in / (1 << n + m);
 
     component n2b_small = Num2Bits(n);
-    n2b_small.in <= = small;
+    n2b_small.in = small;
     component n2b_medium = Num2Bits(m);
-    n2b_medium.in <= = medium;
+    n2b_medium.in = medium;
     component n2b_big = Num2Bits(k);
-    n2b_big.in <= = big;
+    n2b_big.in = big;
 
     in = small + medium * (1 << n) + big * (1 << n + m);
 }
 
 // a[i], b[i] in 0... 2**n-1
 // represent a = a[0] + a[1] * 2**n + .. + a[k - 1] * 2**(n * k)
-template BigAdd(n, k) {
+template<std::size_t n, std::size_t k>
+std::array<std::size_t, k + 1> BigAdd(const std::array<std::size_t, k> &a, const std::array<std::size_t, k> &b) {
     assert(n <= 252);
-    signal input a[k];
-    signal input b[k];
-    signal output out[k + 1];
+    std::array<std::size_t, k + 1> out;
 
     component unit0 = ModSum(n);
-    unit0.a <= = a[0];
-    unit0.b <= = b[0];
-    out[0] <= = unit0.sum;
+    unit0.a = a[0];
+    unit0.b = b[0];
+    out[0] = unit0.sum;
 
     component unit[k - 1];
     for (std::size_t i = 1; i < k; i++) {
         unit[i - 1] = ModSumThree(n);
-        unit[i - 1].a <= = a[i];
-        unit[i - 1].b <= = b[i];
+        unit[i - 1].a = a[i];
+        unit[i - 1].b = b[i];
         if (i == 1) {
-            unit[i - 1].c <= = unit0.carry;
+            unit[i - 1].c = unit0.carry;
         } else {
-            unit[i - 1].c <= = unit[i - 2].carry;
+            unit[i - 1].c = unit[i - 2].carry;
         }
-        out[i] <= = unit[i - 1].sum;
+        out[i] = unit[i - 1].sum;
     }
-    out[k] <= = unit[k - 2].carry;
+    out[k] = unit[k - 2].carry;
+
+    return out;
 }
 
 /*
@@ -210,11 +208,12 @@ Notes:
     - If a[i], b[j] have absolute value < B, then out[i] has absolute value < k * B^2
 m_out is the expected max number of bits in the output registers
 */
-template BigMultShortLong(n, k, m_out) {
+template<std::size_t n, std::size_t k, std::size_t m_out>
+std::array<std::size_t, 2 * k - 1>
+BigMultShortLong(const std::array<std::size_t, k> &a, const std::array<std::size_t, k> &b) {
+    std::array<std::size_t, 2 * k - 1> out;
+
     assert(n <= 126);
-    signal input a[k];
-    signal input b[k];
-    signal output out[2 * k - 1];
 
     std::size_t prod_val[2 * k - 1];
     for (int i = 0; i < 2 * k - 1; i++) {
@@ -228,14 +227,14 @@ template BigMultShortLong(n, k, m_out) {
                 prod_val[i] = prod_val[i] + a[a_idx] * b[i - a_idx];
             }
         }
-        out[i] < --prod_val[i];
+        out[i] = prod_val[i];
     }
 
     std::size_t k2 = 2 * k - 1;
     std::size_t pow[k2][k2];    // we cache the exponent values because it makes a big difference in witness generation time
     for (int i = 0; i < k2; i++)
         for (std::size_t j = 0; j < k2; j++)
-            pow[i][j] = i * *j;
+            pow[i][j] = std::pow(i, j);
 
     std::size_t a_poly[2 * k - 1];
     std::size_t b_poly[2 * k - 1];
@@ -256,17 +255,20 @@ template BigMultShortLong(n, k, m_out) {
     for (int i = 0; i < 2 * k - 1; i++) {
         out_poly[i] = a_poly[i] * b_poly[i];
     }
+
+    return out;
 }
 
 /*
 same as BigMultShortLong except a has degree ka - 1, b has degree kb - 1
     - If a[i], b[j] have absolute value < B, then out[i] has absolute value < min(ka, kb) * B^2
 */
-template BigMultShortLongUnequal(n, ka, kb, m_out) {
+template<std::size_t n, std::size_t ka, std::size_t kb, std::size_t m_out>
+std::array<std::size_t, ka + kb - 1>
+BigMultShortLongUnequal(const std::array<std::size_t, ka> &a, const std::array<std::size_t, kb> &b) {
     assert(n <= 126);
-    signal input a[ka];
-    signal input b[kb];
-    signal output out[ka + kb - 1];
+
+    std::array<std::size_t, ka + kb - 1> out;
 
     std::size_t prod_val[ka + kb - 1];
     for (int i = 0; i < ka + kb - 1; i++) {
@@ -278,18 +280,19 @@ template BigMultShortLongUnequal(n, ka, kb, m_out) {
         }
     }
     for (int i = 0; i < ka + kb - 1; i++) {
-        out[i] < --prod_val[i];
+        out[i] = prod_val[i];
     }
 
     std::size_t k2 = ka + kb - 1;
     std::size_t pow[k2][k2];
     for (int i = 0; i < k2; i++)
         for (std::size_t j = 0; j < k2; j++)
-            pow[i][j] = i * *j;
+            pow[i][j] = std::pow(i, j);
 
-    std::size_t a_poly[ka + kb - 1];
-    std::size_t b_poly[ka + kb - 1];
-    std::size_t out_poly[ka + kb - 1];
+    std::array<std::size_t, ka + kb - 1> a_poly;
+    std::array<std::size_t, ka + kb - 1> b_poly;
+    std::array<std::size_t, ka + kb - 1> out_poly;
+
     for (int i = 0; i < ka + kb - 1; i++) {
         out_poly[i] = 0;
         a_poly[i] = 0;
@@ -307,15 +310,17 @@ template BigMultShortLongUnequal(n, ka, kb, m_out) {
     for (int i = 0; i < ka + kb - 1; i++) {
         out_poly[i] = a_poly[i] * b_poly[i];
     }
+
+    return out_poly;
 }
 
 // in[i] contains longs
 // out[i] contains shorts
-template LongToShortNoEndCarry(n, k) {
+template<std::size_t n, std::size_t k>
+std::array<std::size_t, k + 1> LongToShortNoEndCarry(const std::array<std::size_t, k> &in) {
     assert(k > 2);
     assert(n <= 126);
-    signal input in[k];
-    signal output out[k + 1];
+    std::array<std::size_t, k + 1> out;
 
     std::size_t split[k][3];
     for (int i = 0; i < k; i++) {
@@ -324,63 +329,69 @@ template LongToShortNoEndCarry(n, k) {
 
     std::size_t carry[k];
     carry[0] = 0;
-    out[0] < --split[0][0];
+    out[0] = split[0][0];
     if (k > 1) {
         std::size_t sumAndCarry[2] = SplitFn(split[0][1] + split[1][0], n, n);
-        out[1] < --sumAndCarry[0];
+        out[1] = sumAndCarry[0];
         carry[1] = sumAndCarry[1];
     }
     if (k > 2) {
         for (std::size_t i = 2; i < k; i++) {
             std::size_t sumAndCarry[2] = SplitFn(split[i][0] + split[i - 1][1] + split[i - 2][2] + carry[i - 1], n, n);
-            out[i] < --sumAndCarry[0];
+            out[i] = sumAndCarry[0];
             carry[i] = sumAndCarry[1];
         }
-        out[k] < --split[k - 1][1] + split[k - 2][2] + carry[k - 1];
+        out[k] = split[k - 1][1] + split[k - 2][2] + carry[k - 1];
     }
 
     component outRangeChecks[k + 1];
     for (int i = 0; i < k + 1; i++) {
         outRangeChecks[i] = Num2Bits(n);
-        outRangeChecks[i].in <= = out[i];
+        outRangeChecks[i].in = out[i];
     }
 
     signal runningCarry[k];
     component runningCarryRangeChecks[k];
-    runningCarry[0] < --(in[0] - out[0]) / (1 << n);
-    runningCarryRangeChecks[0] = Num2Bits(n + log_ceil(k));
-    runningCarryRangeChecks[0].in <= = runningCarry[0];
+    runningCarry[0] = (in[0] - out[0]) / (1 << n);
+    runningCarryRangeChecks[0] =
+            Num2Bits(n + log_ceil(k)
+            );
+    runningCarryRangeChecks[0].in = runningCarry[0];
     runningCarry[0] * (1 << n) = in[0] - out[0];
     for (std::size_t i = 1; i < k; i++) {
-        runningCarry[i] < --(in[i] - out[i] + runningCarry[i - 1]) / (1 << n);
+        runningCarry[i] = (in[i] - out[i] + runningCarry[i - 1]) / (1 << n);
         runningCarryRangeChecks[i] = Num2Bits(n + log_ceil(k));
-        runningCarryRangeChecks[i].in <= = runningCarry[i];
+        runningCarryRangeChecks[i].in = runningCarry[i];
         runningCarry[i] * (1 << n) = in[i] - out[i] + runningCarry[i - 1];
     }
     runningCarry[k - 1] = out[k];
 }
 
-template BigMult(n, k) {
-    assert(k <= 2 * *n);
-    signal input a[k];
-    signal input b[k];
-    signal output out[2 * k];
+template<std::size_t n, std::size_t k>
+std::array<std::size_t, 2 * k> BigMult(const std::array<std::size_t, k> &a, const std::array<std::size_t, k> &b) {
+    assert(k <= std::pow(2, n));
+
+    std::array<std::size_t, 2 * k> out;
 
     std::size_t LOGK = log_ceil(k);
     component mult = BigMultShortLong(n, k, 2 * n + LOGK);
     for (int i = 0; i < k; i++) {
-        mult.a[i] <= = a[i];
-        mult.b[i] <= = b[i];
+        mult.a[i] = a[i];
+        mult.b[i] = b[i];
     }
 
-    // no carry is possible in the highest order register
+// no carry is possible in the highest order register
     component longshort = LongToShortNoEndCarry(n, 2 * k - 1);
-    for (int i = 0; i < 2 * k - 1; i++) {
-        longshort.in[i] <= = mult.out[i];
+    for (
+            int i = 0;
+            i < 2 * k - 1; i++) {
+        longshort.in[i] = mult.out[i];
     }
     for (int i = 0; i < 2 * k; i++) {
-        out[i] <= = longshort.out[i];
+        out[i] = longshort.out[i];
     }
+
+    return out;
 }
 
 /*
@@ -389,107 +400,111 @@ Inputs:
 Output:
     - out = (a < b) ? 1 : 0
 */
-template BigLessThan(n, k) {
-    signal input a[k];
-    signal input b[k];
-    signal output out;
+template<std::size_t n, std::size_t k>
+std::size_t BigLessThan(const std::array<std::size_t, k> &a, const std::array<std::size_t, k> &b) {
+    std::size_t out;
 
     component lt[k];
     component eq[k];
     for (int i = 0; i < k; i++) {
         lt[i] = LessThan(n);
-        lt[i].in[0] <= = a[i];
-        lt[i].in[1] <= = b[i];
+        lt[i].in[0] = a[i];
+        lt[i].in[1] = b[i];
         eq[i] = IsEqual();
-        eq[i].in[0] <= = a[i];
-        eq[i].in[1] <= = b[i];
+
+        eq[i].in[0] = a[i];
+        eq[i].in[1] = b[i];
     }
 
-    // ors[i] holds (lt[k - 1] || (eq[k - 1] && lt[k - 2]) .. || (eq[k - 1] && .. && lt[i]))
-    // ands[i] holds (eq[k - 1] && .. && lt[i])
-    // eq_ands[i] holds (eq[k - 1] && .. && eq[i])
+// ors[i] holds (lt[k - 1] || (eq[k - 1] && lt[k - 2]) .. || (eq[k - 1] && .. && lt[i]))
+// ands[i] holds (eq[k - 1] && .. && lt[i])
+// eq_ands[i] holds (eq[k - 1] && .. && eq[i])
     component ors[k - 1];
     component ands[k - 1];
     component eq_ands[k - 1];
     for (std::size_t i = k - 2; i >= 0; i--) {
         ands[i] = AND();
+
         eq_ands[i] = AND();
+
         ors[i] = OR();
 
         if (i == k - 2) {
-            ands[i].a <= = eq[k - 1].out;
-            ands[i].b <= = lt[k - 2].out;
-            eq_ands[i].a <= = eq[k - 1].out;
-            eq_ands[i].b <= = eq[k - 2].out;
-            ors[i].a <= = lt[k - 1].out;
-            ors[i].b <= = ands[i].out;
+            ands[i].a = eq[k - 1].out;
+            ands[i].b = lt[k - 2].out;
+            eq_ands[i].a = eq[k - 1].out;
+            eq_ands[i].b = eq[k - 2].out;
+            ors[i].a = lt[k - 1].out;
+            ors[i].b = ands[i].out;
         } else {
-            ands[i].a <= = eq_ands[i + 1].out;
-            ands[i].b <= = lt[i].out;
-            eq_ands[i].a <= = eq_ands[i + 1].out;
-            eq_ands[i].b <= = eq[i].out;
-            ors[i].a <= = ors[i + 1].out;
-            ors[i].b <= = ands[i].out;
+            ands[i].a = eq_ands[i + 1].
+                    out;
+            ands[i].b = lt[i].out;
+            eq_ands[i].a = eq_ands[i + 1].out;
+            eq_ands[i].b = eq[i].out;
+            ors[i].a = ors[i + 1].out;
+            ors[i].b = ands[i].out;
         }
     }
-    out <= = ors[0].out;
+    out = ors[0].out;
+
+    return out;
 }
 
 // leading register of b should be non-zero
-template BigMod(n, k) {
+template<std::size_t n, std::size_t k>
+std::pair<std::array<std::size_t, k + 1>, std::array<std::size_t, k>>
+BigMod(const std::array<std::size_t, 2 * k> &a, const std::array<std::size_t, k> &b) {
     assert(k < 50);
     assert(n <= 126);
-    signal input a[2 * k];
-    signal input b[k];
-
-    signal output div[k + 1];
-    signal output mod[k];
+    std::array<std::size_t, k + 1> div;
+    std::array<std::size_t, k> mod;
 
     std::size_t longdiv[2][50] = long_div(n, k, a, b);
     for (int i = 0; i < k; i++) {
-        div[i] < --longdiv[0][i];
-        mod[i] < --longdiv[1][i];
+        div[i] = longdiv[0][i];
+        mod[i] = longdiv[1][i];
     }
-    div[k] < --longdiv[0][k];
+    div[k] = longdiv[0][k];
     component div_range_checks[k + 1];
     for (int i = 0; i <= k; i++) {
         div_range_checks[i] = Num2Bits(n);
-        div_range_checks[i].in <= = div[i];
+        div_range_checks[i].in = div[i];
     }
     component mod_range_checks[k];
     for (int i = 0; i < k; i++) {
         mod_range_checks[i] = Num2Bits(n);
-        mod_range_checks[i].in <= = mod[i];
+        mod_range_checks[i].in = mod[i];
     }
 
     component mul = BigMult(n, k + 1);
     for (int i = 0; i < k; i++) {
-        mul.a[i] <= = div[i];
-        mul.b[i] <= = b[i];
+        mul.a[i] = div[i];
+        mul.b[i] = b[i];
     }
-    mul.a[k] <= = div[k];
-    mul.b[k] <= = 0;
+    mul.a[k] = div[k];
+    mul.b[k] = 0;
 
     for (int i = 0; i < 2 * k + 2; i++) {
-        // log(mul.out[i]);
+// log(mul.out[i]);
     }
 
     component add = BigAdd(n, 2 * k + 2);
     for (int i = 0; i < 2 * k; i++) {
-        add.a[i] <= = mul.out[i];
+        add.a[i] = mul.out[i];
         if (i < k) {
-            add.b[i] <= = mod[i];
+            add.b[i] = mod[i];
         } else {
-            add.b[i] <= = 0;
+            add.b[i] = 0;
         }
     }
-    add.a[2 * k] <= = mul.out[2 * k];
-    add.a[2 * k + 1] <= = mul.out[2 * k + 1];
-    add.b[2 * k] <= = 0;
-    add.b[2 * k + 1] <= = 0;
+    add.a[2 * k] = mul.out[2 * k];
+    add.a[2 * k + 1] = mul.out[2 * k + 1];
+    add.b[2 * k] = 0;
+    add.b[2 * k + 1] = 0;
 
     for (int i = 0; i < 2 * k + 2; i++) {
-        // log(add.out[i]);
+// log(add.out[i]);
     }
 
     for (int i = 0; i < 2 * k; i++) {
@@ -500,21 +515,23 @@ template BigMod(n, k) {
 
     component lt = BigLessThan(n, k);
     for (int i = 0; i < k; i++) {
-        lt.a[i] <= = mod[i];
-        lt.b[i] <= = b[i];
+        lt.a[i] = mod[i];
+        lt.b[i] = b[i];
     }
     lt.out = 1;
+
+    return {div, mod};
 }
 
 // copied from BigMod to allow a to have m registers and use long_div2
-template BigMod2(n, k, m) {
+template<std::size_t n, std::size_t k, std::size_t m>
+std::pair<std::array<std::size_t, k + 1>, std::array<std::size_t, k>>
+BigMod2(const std::array<std::size_t, m> &a, const std::array<std::size_t, k> &b) {
     assert(k <= 50 && m - k < 50);
     assert(n <= 126);
-    signal input a[m];
-    signal input b[k];
 
-    signal output div[m - k + 1];
-    signal output mod[k];
+    std::array<std::size_t, m - k + 1> div;
+    std::array<std::size_t, k> mod;
 
     std::size_t longdiv[2][50] = long_div2(n, k, m - k, a, b);
     for (int i = 0; i < k; i++) {
@@ -526,37 +543,37 @@ template BigMod2(n, k, m) {
     component div_range_checks[m - k + 1];
     for (int i = 0; i <= m - k; i++) {
         div_range_checks[i] = Num2Bits(n);
-        div_range_checks[i].in <= = div[i];
+        div_range_checks[i].in = div[i];
     }
     component mod_range_checks[k];
     for (int i = 0; i < k; i++) {
         mod_range_checks[i] = Num2Bits(n);
-        mod_range_checks[i].in <= = mod[i];
+        mod_range_checks[i].in = mod[i];
     }
 
     component mul = BigMult(n, m - k + 1);
-    // this might need to be optimized since b has less registers than div
+// this might need to be optimized since b has less registers than div
     for (int i = 0; i < k; i++) {
-        mul.a[i] <= = div[i];
-        mul.b[i] <= = b[i];
+        mul.a[i] = div[i];
+        mul.b[i] = b[i];
     }
     for (std::size_t i = k; i <= m - k; i++) {
-        mul.a[i] <= = div[i];
-        mul.b[i] <= = 0;
+        mul.a[i] = div[i];
+        mul.b[i] = 0;
     }
 
-    // mul shouldn't have more registers than a
+// mul shouldn't have more registers than a
     for (std::size_t i = m; i < 2 * (m - k) + 2; i++) {
         mul.out[i] = 0;
     }
 
     component add = BigAdd(n, m);
     for (int i = 0; i < m; i++) {
-        add.a[i] <= = mul.out[i];
+        add.a[i] = mul.out[i];
         if (i < k) {
-            add.b[i] <= = mod[i];
+            add.b[i] = mod[i];
         } else {
-            add.b[i] <= = 0;
+            add.b[i] = 0;
         }
     }
 
@@ -567,47 +584,50 @@ template BigMod2(n, k, m) {
 
     component lt = BigLessThan(n, k);
     for (int i = 0; i < k; i++) {
-        lt.a[i] <= = mod[i];
-        lt.b[i] <= = b[i];
+        lt.a[i] = mod[i];
+        lt.b[i] = b[i];
     }
     lt.out = 1;
+
+    return {div, mod};
 }
 
 // a[i], b[i] in 0... 2**n-1
 // represent a = a[0] + a[1] * 2**n + .. + a[k - 1] * 2**(n * k)
 // calculates (a+b)%p, where 0<= a,b < p
-template BigAddModP(n, k) {
+template<std::size_t n, std::size_t k>
+std::array<std::size_t, k> BigAddModP(const std::array<std::size_t, k> &a, const std::array<std::size_t, k> b,
+                                      const std::array<std::size_t, k> p) {
     assert(n <= 252);
-    signal input a[k];
-    signal input b[k];
-    signal input p[k];
-    signal output out[k];
+
+    std::array<std::size_t, k> out;
 
     component add = BigAdd(n, k);
     for (int i = 0; i < k; i++) {
-        add.a[i] <= = a[i];
-        add.b[i] <= = b[i];
+        add.b[i] = b[i];
     }
     component lt = BigLessThan(n, k + 1);
     for (int i = 0; i < k; i++) {
-        lt.a[i] <= = add.out[i];
-        lt.b[i] <= = p[i];
+        lt.a[i] = add.out[i];
+        lt.b[i] = p[i];
     }
-    lt.a[k] <= = add.out[k];
-    lt.b[k] <= = 0;
+    lt.a[k] = add.out[k];
+    lt.b[k] = 0;
 
     component sub = BigSub(n, k + 1);
     for (int i = 0; i < k; i++) {
-        sub.a[i] <= = add.out[i];
-        sub.b[i] <= = (1 - lt.out) * p[i];
+        sub.a[i] = add.out[i];
+        sub.b[i] = (1 - lt.out) * p[i];
     }
-    sub.a[k] <= = add.out[k];
-    sub.b[k] <= = 0;
+    sub.a[k] = add.out[k];
+    sub.b[k] = 0;
 
     sub.out[k] = 0;
     for (int i = 0; i < k; i++) {
-        out[i] <= = sub.out[i];
+        out[i] = sub.out[i];
     }
+
+    return out;
 }
 
 /*
@@ -618,119 +638,126 @@ Output:
     - BigInt out = a - b
     - underflow = how much is borrowed at the highest digit of subtraction, only nonzero if a < b
 */
-template BigSub(n, k) {
+template<std::size_t n, std::size_t k>
+std::pair<std::array<std::size_t, k>, std::size_t>
+BigSub(const std::array<std::size_t, k> &a, const std::array<std::size_t, k> &b) {
     assert(n <= 252);
-    signal input a[k];
-    signal input b[k];
-    signal output out[k];
-    signal output underflow;
+    std::array<std::size_t, k> out;
+    std::size_t underflow;
 
     component unit0 = ModSub(n);
-    unit0.a <= = a[0];
-    unit0.b <= = b[0];
-    out[0] <= = unit0.out;
+    unit0.a = a[0];
+    unit0.b = b[0];
+    out[0] = unit0.out;
 
     component unit[k - 1];
     for (std::size_t i = 1; i < k; i++) {
         unit[i - 1] = ModSubThree(n);
-        unit[i - 1].a <= = a[i];
-        unit[i - 1].b <= = b[i];
+        unit[i - 1].a = a[i];
+        unit[i - 1].b = b[i];
         if (i == 1) {
-            unit[i - 1].c <= = unit0.borrow;
+            unit[i - 1].c = unit0.borrow;
         } else {
-            unit[i - 1].c <= = unit[i - 2].borrow;
+            unit[i - 1].c = unit[i - 2].borrow;
         }
-        out[i] <= = unit[i - 1].out;
+        out[i] = unit[i - 1].out;
     }
-    underflow <= = unit[k - 2].borrow;
+    underflow = unit[k - 2].borrow;
+
+    return {out, underflow};
 }
 
 // calculates (a - b) % p, where a, b < p
 // note: does not assume a >= b
-template BigSubModP(n, k) {
+template<std::size_t n, std::size_t k>
+std::array<std::size_t, k> BigSubModP(const std::array<std::size_t, k> &a, const std::array<std::size_t, k> &b,
+                                      const std::array<std::size_t, k> &p) {
     assert(n <= 252);
-    signal input a[k];
-    signal input b[k];
-    signal input p[k];
-    signal output out[k];
+
+    std::array<std::size_t, k> out;
+
     component sub = BigSub(n, k);
     for (int i = 0; i < k; i++) {
-        sub.a[i] <= = a[i];
-        sub.b[i] <= = b[i];
+        sub.a[i] = a[i];
+        sub.b[i] = b[i];
     }
     signal flag;
-    flag <= = sub.underflow;
+    std::size_t flag = sub.underflow;
     component add = BigAdd(n, k);
     for (int i = 0; i < k; i++) {
-        add.a[i] <= = sub.out[i];
-        add.b[i] <= = p[i];
+        add.a[i] = sub.out[i];
+        add.b[i] = p[i];
     }
     signal tmp[k];
     for (int i = 0; i < k; i++) {
-        tmp[i] <= = (1 - flag) * sub.out[i];
-        out[i] <= = tmp[i] + flag * add.out[i];
+        tmp[i] = (1 - flag) * sub.out[i];
+        out[i] = tmp[i] + flag * add.out[i];
     }
+
+    return out;
 }
 
 // Note: deprecated
-template BigMultModP(n, k) {
+template<std::size_t n, std::size_t k>
+std::array<std::size_t, k> BigMultModP(const std::array<std::size_t, k> &a, const std::array<std::size_t, k> &b,
+                                       const std::array<std::size_t, k> &p) {
     assert(n <= 252);
-    signal input a[k];
-    signal input b[k];
-    signal input p[k];
-    signal output out[k];
+
+    std::array<std::size_t, k> out;
 
     component big_mult = BigMult(n, k);
     for (int i = 0; i < k; i++) {
-        big_mult.a[i] <= = a[i];
-        big_mult.b[i] <= = b[i];
+        big_mult.a[i] = a[i];
+        big_mult.b[i] = b[i];
     }
     component big_mod = BigMod(n, k);
     for (int i = 0; i < 2 * k; i++) {
-        big_mod.a[i] <= = big_mult.out[i];
+        big_mod.a[i] = big_mult.out[i];
     }
     for (int i = 0; i < k; i++) {
-        big_mod.b[i] <= = p[i];
+        big_mod.b[i] = p[i];
     }
     for (int i = 0; i < k; i++) {
-        out[i] <= = big_mod.mod[i];
+        out[i] = big_mod.mod[i];
     }
 }
 
-template BigModInv(n, k) {
+template<std::size_t n, std::size_t k>
+std::array<std::size_t, k> BigModInv(const std::array<std::size_t, k> &in, const std::array<std::size_t, k> &p) {
     assert(k < 50);
     assert(n <= 252);
-    signal input in[k];
-    signal input p[k];    // p represents a prime
-    signal output out[k];
 
-    // length k
+    std::array<std::size_t, k> out;
+
+// length k
     std::size_t inv[50] = mod_inv(n, k, in, p);
     for (int i = 0; i < k; i++) {
-        out[i] < --inv[i];
+        out[i] = inv[i];
     }
     component range_checks[k];
     for (int i = 0; i < k; i++) {
         range_checks[i] = Num2Bits(n);
-        range_checks[i].in <= = out[i];
+        range_checks[i].in = out[i];
     }
 
     component mult = BigMult(n, k);
     for (int i = 0; i < k; i++) {
-        mult.a[i] <= = in[i];
-        mult.b[i] <= = out[i];
+        mult.a[i] = in[i];
+        mult.b[i] = out[i];
     }
     component mod = BigMod(n, k);
     for (int i = 0; i < 2 * k; i++) {
-        mod.a[i] <= = mult.out[i];
+        mod.a[i] = mult.out[i];
     }
     for (int i = 0; i < k; i++) {
-        mod.b[i] <= = p[i];
+        mod.b[i] = p[i];
     }
     mod.mod[0] = 1;
     for (std::size_t i = 1; i < k; i++) {
         mod.mod[i] = 0;
     }
+
+    return out;
 }
 
 /* Taken from circom-ecdsa
@@ -740,12 +767,11 @@ Input:
 Implements:
     - constrain that in[] evaluated at X = 2^n as a big integer equals zero
 */
-template CheckCarryToZero(n, m, k) {
+template<std::size_t n, std::size_t m, std::size_t k>
+void CheckCarryToZero(const std::array<std::size_t, k> &in) {
     assert(k >= 2);
 
     std::size_t EPSILON = 1;    // see below for why 1 is ok
-
-    signal input in[k];
 
     signal carry[k];
     component carryRangeChecks[k];
@@ -758,10 +784,10 @@ template CheckCarryToZero(n, m, k) {
             carry[i] < --(in[i] + carry[i - 1]) / (1 << n);
             in[i] + carry[i - 1] = carry[i] * (1 << n);
         }
-        // checking carry is in the range of -2^(m-n-1+eps), 2^(m-n-1+eps)
-        carryRangeChecks[i].in <= = carry[i] + (1 << (m + EPSILON - n - 1));
-        // carry[i] is bounded by 2^{m-1} * (2^{-n} + 2^{-2n} + ... ) = 2^{m-n-1} * ( 1/ (1-2^{-n})) < 2^{m-n} by
-        // geometric series
+// checking carry is in the range of -2^(m-n-1+eps), 2^(m-n-1+eps)
+        carryRangeChecks[i].in = carry[i] + (1 << (m + EPSILON - n - 1));
+// carry[i] is bounded by 2^{m-1} * (2^{-n} + 2^{-2n} + ... ) = 2^{m-n-1} * ( 1/ (1-2^{-n})) < 2^{m-n} by
+// geometric series
     }
 
     in[k - 1] + carry[k - 2] = 0;
@@ -783,10 +809,11 @@ Notes:
     - If each in[i] has absolute value <B, then out[i] has absolute value < (m+1) * 2^n * B
 m_out is the expected max number of bits in the output registers
 */
-template PrimeReduce(n, k, m, p, m_out) {
+template<std::size_t n, std::size_t k, std::size_t m, std::size_t p, std::size_t m_out>
+std::array<std::size_t, k> PrimeReduce(const std::array<std::size_t, m + k> &in) {
+    std::array<std::size_t, k> out;
+
     assert(k <= 50);
-    signal input in[m + k];
-    signal output out[k];
 
     std::size_t two[k];
     std::size_t e[k];
@@ -804,7 +831,7 @@ template PrimeReduce(n, k, m, p, m_out) {
 
     std::size_t r[m][50];
     for (int i = 0; i < m; i++) {
-        // r[i] = 2^{n(k+i)} mod p
+// r[i] = 2^{n(k+i)} mod p
         if (i == 0) {
             r[i] = pow2nk;
         } else {
@@ -818,12 +845,12 @@ template PrimeReduce(n, k, m, p, m_out) {
         for (std::size_t j = 0; j < k; j++)
             out_sum[j] += in[i + k] * r[i][j];    // linear constraint
     for (int i = 0; i < k; i++)
-        out[i] <= = out_sum[i];
-    /*component range_checks[k];
-    for (int i = 0; i < k; i++) {
-        range_checks[i] = Num2Bits(m_out+1);
-        range_checks[i].in <== out[i] + (1 << m_out);
-    }*/
+        out[i] = out_sum[i];
+/*component range_checks[k];
+for (int i = 0; i < k; i++) {
+    range_checks[i] = Num2Bits(m_out+1);
+    range_checks[i].in <== out[i] + (1 << m_out);
+}*/
 }
 
 /*
@@ -839,10 +866,11 @@ Notes:
     - If a[i][j], b[i][j] have absolute value < B, then out[i][j] has absolute value < l * k * B^2
 Use case: one variable will end up being 2^n; the other will be the field extension generator
 */
-template BigMultShortLong2D(n, k, l) {
-    signal input a[l][k];
-    signal input b[l][k];
-    signal output out[2 * l - 1][2 * k - 1];
+template<std::size_t n, std::size_t k, std::size_t l>
+std::array<std::array<std::size_t, 2 * l - 1>, 2 * k - 1>
+BigMultShortLong2D(const std::array<std::array<std::size_t, l>, k> &a,
+                   const std::array<std::array<std::size_t, l>, k> &b) {
+    std::array<std::array<std::size_t, 2 * l - 1>, 2 * k - 1> out;
 
     std::size_t prod_val[2 * l - 1][2 * k - 1];
     for (int i = 0; i < 2 * l - 1; i++) {
@@ -873,7 +901,7 @@ template BigMultShortLong2D(n, k, l) {
     std::size_t pow[k2][k2];
     for (int i = 0; i < k2; i++)
         for (std::size_t j = 0; j < k2; j++)
-            pow[i][j] = i * *j;
+            pow[i][j] = std::pow(i, j);
 
     std::size_t a_poly[2 * l - 1][2 * k - 1];
     std::size_t b_poly[2 * l - 1][2 * k - 1];
@@ -886,15 +914,16 @@ template BigMultShortLong2D(n, k, l) {
             for (std::size_t deg1 = 0; deg1 < l; deg1++) {
                 for (std::size_t deg2 = 0; deg2 < k; deg2++) {
                     a_poly[i][j] =
-                        a_poly[i][j] + a[deg1][deg2] * pow[i][deg1] * pow[j][deg2];    // (i ** deg1) * (j ** deg2);
+                            a_poly[i][j] + a[deg1][deg2] * pow[i][deg1] * pow[j][deg2];    // (i ** deg1) * (j ** deg2);
                     b_poly[i][j] =
-                        b_poly[i][j] + b[deg1][deg2] * pow[i][deg1] * pow[j][deg2];    // (i ** deg1) * (j ** deg2);
+                            b_poly[i][j] + b[deg1][deg2] * pow[i][deg1] * pow[j][deg2];    // (i ** deg1) * (j ** deg2);
                 }
             }
             for (std::size_t deg1 = 0; deg1 < 2 * l - 1; deg1++) {
                 for (std::size_t deg2 = 0; deg2 < 2 * k - 1; deg2++) {
                     out_poly[i][j] =
-                        out_poly[i][j] + out[deg1][deg2] * pow[i][deg1] * pow[j][deg2];    // (i ** deg1) * (j ** deg2);
+                            out_poly[i][j] +
+                            out[deg1][deg2] * pow[i][deg1] * pow[j][deg2];    // (i ** deg1) * (j ** deg2);
                 }
             }
         }
@@ -912,10 +941,10 @@ Same as BigMultShortLong2D except a has degrees la - 1, ka - 1 and b has degrees
 Notes:
     - If a[i][j], b[i][j] have absolute value < B, then out[i][j] has absolute value < min(la, lb) * min(ka, kb) * B^2
 */
-template BigMultShortLong2DUnequal(n, ka, kb, la, lb) {
-    signal input a[la][ka];
-    signal input b[lb][kb];
-    signal output out[la + lb - 1][ka + kb - 1];
+template<std::size_t n, std::size_t ka, std::size_t kb, std::size_t la, std::size_t lb>
+std::array<std::array<std::size_t, la + lb - 1>, ka + kb - 1>
+BigMultShortLong2DUnequal(const std::array<std::array<std::size_t, la>, ka> &a,
+                          const std::array<std::array<std::size_t, lb>, kb> &b) {
 
     std::size_t prod_val[la + lb - 1][ka + kb - 1];
     for (int i = 0; i < la + lb - 1; i++) {
@@ -938,7 +967,7 @@ template BigMultShortLong2DUnequal(n, ka, kb, la, lb) {
 
     for (int i = 0; i < la + lb - 1; i++) {
         for (std::size_t j = 0; j < ka + kb - 1; j++) {
-            out[i][j] < --prod_val[i][j];
+            out[i][j] = prod_val[i][j];
         }
     }
 
@@ -946,7 +975,7 @@ template BigMultShortLong2DUnequal(n, ka, kb, la, lb) {
     std::size_t pow[k2][k2];
     for (int i = 0; i < k2; i++)
         for (std::size_t j = 0; j < k2; j++)
-            pow[i][j] = i * *j;
+            pow[i][j] = std::pow(i, j);
 
     std::size_t a_poly[la + lb - 1][ka + kb - 1];
     std::size_t b_poly[la + lb - 1][ka + kb - 1];
@@ -959,19 +988,21 @@ template BigMultShortLong2DUnequal(n, ka, kb, la, lb) {
             for (std::size_t deg1 = 0; deg1 < la + lb - 1; deg1++) {
                 if (deg1 < la) {
                     for (std::size_t deg2 = 0; deg2 < ka; deg2++) {
-                        a_poly[i][j] =
-                            a_poly[i][j] + a[deg1][deg2] * pow[i][deg1] * pow[j][deg2];    //(i ** deg1) * (j ** deg2);
+                        a_poly[i][j] = a_poly[i][j] +
+                                       a[deg1][deg2] * pow[i][deg1] * pow[j][deg2];    //(i ** deg1) * (j ** deg2);
                     }
                 }
                 if (deg1 < lb) {
                     for (std::size_t deg2 = 0; deg2 < kb; deg2++) {
                         b_poly[i][j] =
-                            b_poly[i][j] + b[deg1][deg2] * pow[i][deg1] * pow[j][deg2];    // (i ** deg1) * (j ** deg2);
+                                b_poly[i][j] +
+                                b[deg1][deg2] * pow[i][deg1] * pow[j][deg2];    // (i ** deg1) * (j ** deg2);
                     }
                 }
                 for (std::size_t deg2 = 0; deg2 < ka + kb - 1; deg2++) {
                     out_poly[i][j] =
-                        out_poly[i][j] + out[deg1][deg2] * pow[i][deg1] * pow[j][deg2];    // (i ** deg1) * (j ** deg2);
+                            out_poly[i][j] +
+                            out[deg1][deg2] * pow[i][deg1] * pow[j][deg2];    // (i ** deg1) * (j ** deg2);
                 }
             }
         }

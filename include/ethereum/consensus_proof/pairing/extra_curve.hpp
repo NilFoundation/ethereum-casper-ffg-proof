@@ -15,7 +15,7 @@ include "./curve.circom";
 // lamb = (b[1] - a[1]) / (b[0] - a[0]) % q
 // out[0] = lamb ** 2 - a[0] - b[0] % q
 // out[1] = lamb * (a[0] - out[0]) - a[1] % q
-template EllipticCurveAddUnequal3Reg(n, q0, q1, q2) {
+template<std::size_t n, std::size_t q0, std::size_t q1, std::size_t q2> void EllipticCurveAddUnequal3Reg() {
     std::size_t k = 3;
     signal input a[2][k];
     signal input b[2][k];
@@ -126,7 +126,7 @@ template EllipticCurveAddUnequal3Reg(n, q0, q1, q2) {
 // lamb = (b[1] - a[1]) / (b[0] - a[0]) % q
 // out[0] = lamb ** 2 - a[0] - b[0] % q
 // out[1] = lamb * (a[0] - out[0]) - a[1] % q
-template EllipticCurveAddUnequal4Reg(n, q0, q1, q2, q3) {
+template<std::size_t n, std::size_t q0, std::size_t q1, std::size_t q2, std::size_t q3> void EllipticCurveAddUnequal4Reg() {
     std::size_t k = 4;
     signal input a[2][k];
     signal input b[2][k];
@@ -382,7 +382,7 @@ template EllipticCurveDouble0(n, k, a, q0, q1, q2, q3) {
 // c = 3 x^3 - 2 y^2 
 // a, c registers in [0, 2^n), b registers in [0, 2^{n})
 // out = [a, b, c]
-template LineEqualCoefficients(n, k, q){
+template<std::size_t n, std::size_t k, std::size_t q> void LineEqualCoefficients(){
     signal input P[2][k]; 
     signal output out[3][k];
     
@@ -456,7 +456,7 @@ template LineEqualCoefficients(n, k, q){
 //  q has k registers in [0, 2^n)
 //  r is prime
 //  P != O so the order of P in E(Fq) is r, so [i]P != [j]P for i != j in Z/r 
-template MillerLoop1(n, k, b, r, q){
+template<std::size_t n, std::size_t k, std::size_t b, std::size_t r, std::size_t q> void MillerLoop1(){
     signal input P[2][k]; 
     signal input Q[2][6][2][k];
     signal output out[6][2][k];
@@ -590,7 +590,7 @@ template MillerLoop1(n, k, b, r, q){
 // Output:
 //  out = g * l_{P, P}(Q) as element of Fp12 with carry 
 //  out is 6 x 2 x k
-template Fp12MultiplyWithLineEqual(n, k, kg, overflowg, q){
+template<std::size_t n, std::size_t k, std::size_t kg, std::size_t overflowg, std::size_t q> void Fp12MultiplyWithLineEqual(){
     signal input g[6][4][kg];
     signal input P[2][k];
     signal input Q[2][6][2][k];
@@ -634,7 +634,7 @@ template Fp12MultiplyWithLineEqual(n, k, kg, overflowg, q){
 /*
 // version with one less carry per loop that requires 6n + ... overflow 
 // doesn't actually reduce constraints for some reason
-template MillerLoop2(n, k, b, r, q){
+template<std::size_t n, std::size_t k, std::size_t b, std::size_t r, std::size_t q> void MillerLoop2(){
     signal input P[2][k]; 
     signal input Q[2][6][2][k];
     signal output out[6][2][k];

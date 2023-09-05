@@ -6,13 +6,21 @@ else()
     set(format_option -c)
 endif()
 
+get_filename_component(CMAKE_C_COMPILER_DIR ${CMAKE_C_COMPILER} DIRECTORY)
+get_filename_component(CMAKE_CXX_COMPILER_DIR ${CMAKE_CXX_COMPILER} DIRECTORY)
+
+include_directories(${CMAKE_C_COMPILER_DIR}/../include/c++/v1 ${CMAKE_CXX_COMPILER_DIR}/../include/c++/v1)
+link_directories(${CMAKE_C_COMPILER_DIR}/../lib ${CMAKE_CXX_COMPILER_DIR}/../lib)
+
+set(CMAKE_CXX_LINK_EXECUTABLE ${CMAKE_CXX_COMPILER_DIR}/llvm-link)
+
 set(CMAKE_C_COMPILER_TARGET "assigner")
 set(CMAKE_CXX_COMPILER_TARGET "assigner")
 
 set(CMAKE_LIBRARY_ARCHITECTURE "")
 
-set(CMAKE_C_FLAGS "-Xclang -no-opaque-pointers -Xclang -fpreserve-vec3-type -emit-llvm -O1 ${format_option}")
-set(CMAKE_CXX_FLAGS "-Xclang -no-opaque-pointers -Xclang -fpreserve-vec3-type -emit-llvm -O1 ${format_option}")
+list(APPEND CMAKE_C_FLAGS "-Xclang -no-opaque-pointers -Xclang -fpreserve-vec3-type -emit-llvm -O1 ${format_option} -nostdinc++ -stdlib=libc++ -rpath -Wl")
+list(APPEND CMAKE_CXX_FLAGS "-Xclang -no-opaque-pointers -Xclang -fpreserve-vec3-type -emit-llvm -O1 ${format_option} -nostdinc++ -stdlib=libc++ -rpath -Wl")
 
 set(CMAKE_C_OUTPUT_EXTENSION "${extension}")
 set(CMAKE_CXX_OUTPUT_EXTENSION "${extension}")

@@ -1,10 +1,8 @@
-pragma circom 2.0.3;
-
-include "curve.cpp";
-include "curve_fp2.cpp";
-include "fp12.cpp";
-include "final_exp.cpp";
-include "bls12_381_func.cpp";
+#include <ethereum/consensus_proof/pairing/curve.hpp>
+#include <ethereum/consensus_proof/pairing/curve_fp2.hpp>
+#include <ethereum/consensus_proof/pairing/fp12.hpp>
+#include <ethereum/consensus_proof/pairing/final_exp.hpp>
+#include <ethereum/consensus_proof/pairing/bls12_381_func.hpp>
 
 // Inputs:
 //  P is 2 x 2 x k array where P0 = (x_1, y_1) and P1 = (x_2, y_2) are points in E(Fp)
@@ -29,29 +27,29 @@ template SignedLineFunctionUnequalNoCarry(n, k, m_out){
     component Ymult = SignedFp12ScalarMultiplyNoCarry(n, k, 2*n + LOGK);
     for(std::size_t i=0; i<k; i++){
         Xmult.a[i] <== P[0][1][i] - P[1][1][i];
-        
+
         Ymult.a[i] <== P[1][0][i] - P[0][0][i];
     }
     for(std::size_t i=0; i<6; i++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++){
         Xmult.b[i][j][idx] <== Q[0][i][j][idx];
 
-        Ymult.b[i][j][idx] <== Q[1][i][j][idx]; 
-    } 
-    
-    component x1y2 = BigMultShortLong(n, k, 2*n + LOGK); // registers in [0, k*2^{2n}) 
+        Ymult.b[i][j][idx] <== Q[1][i][j][idx];
+    }
+
+    component x1y2 = BigMultShortLong(n, k, 2*n + LOGK); // registers in [0, k*2^{2n})
     component x2y1 = BigMultShortLong(n, k, 2*n + LOGK);
     for(std::size_t i=0; i<k; i++){
-        x1y2.a[i] <== P[0][0][i]; 
-        x1y2.b[i] <== P[1][1][i];
-        
-        x2y1.a[i] <== P[1][0][i]; 
-        x2y1.b[i] <== P[0][1][i];
+        x1y2.a[i] = P[0][0][i];
+        x1y2.b[i] = P[1][1][i];
+
+        x2y1.a[i] = P[1][0][i];
+        x2y1.b[i] = P[0][1][i];
     }
-    
+
     for(std::size_t i=0; i<6; i++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<2*k-1; idx++){
         if( i==0 && j==0 ){
-            out[i][j][idx] <== Xmult.out[i][j][idx] + Ymult.out[i][j][idx] + x1y2.out[idx] - x2y1.out[idx]; // register < 3k*2^{2n} 
-        }else 
+            out[i][j][idx] <== Xmult.out[i][j][idx] + Ymult.out[i][j][idx] + x1y2.out[idx] - x2y1.out[idx]; // register < 3k*2^{2n}
+        }else
             out[i][j][idx] <== Xmult.out[i][j][idx] + Ymult.out[i][j][idx]; // register in [0, 2k*2^{2n} )
     }
 }
@@ -68,7 +66,7 @@ template SignedLineFunctionUnequalNoCarry(n, k, m_out){
 // Then out has registers with abs val < 3k^2*B^3 + 2k*B^2 < (3k^2 + 2k/B)*B^3)
 // m_out is the expected max number of bits in the output registers
 template SignedLineFunctionEqualNoCarry(n, k, m_out){
-    signal input P[2][k]; 
+    signal input P[2][k];
     signal input Q[2][6][2][k];
     signal output out[6][2][3*k-2];
     std::size_t LOGK = log_ceil(k);
@@ -77,8 +75,8 @@ template SignedLineFunctionEqualNoCarry(n, k, m_out){
     for(std::size_t i=0; i<k; i++){
         x_sq3.a[i] <== 3*P[0][i];
         x_sq3.b[i] <== P[0][i];
-    } 
-    
+    }
+
     // 3 x^2 (-X + x)
     component Xmult = SignedFp12ScalarMultiplyNoCarryUnequal(n, 2*k-1, k, 3*n + 2*LOGK + 2); // 3k-2 registers < 3 * k^2 * 2^{3n})
     for(std::size_t idx=0; idx<2*k-1; idx++){
@@ -92,7 +90,7 @@ template SignedLineFunctionEqualNoCarry(n, k, m_out){
     }
 
     // 2 y (Y-y)
-    component Ymult = SignedFp12ScalarMultiplyNoCarry(n, k, 2*n + LOGK + 1); // 2k-1 registers < 2k*2^{2n} 
+    component Ymult = SignedFp12ScalarMultiplyNoCarry(n, k, 2*n + LOGK + 1); // 2k-1 registers < 2k*2^{2n}
     for(std::size_t idx=0; idx < k; idx++){
         Ymult.a[idx] <== 2*P[1][idx];
     }
@@ -102,7 +100,7 @@ template SignedLineFunctionEqualNoCarry(n, k, m_out){
         else
             Ymult.b[i][j][idx] <== Q[1][i][j][idx];
     }
-    
+
     for(std::size_t i=0; i<6; i++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<3*k-2; idx++){
         if(idx < 2*k-1)
             out[i][j][idx] <== Xmult.out[i][j][idx] + Ymult.out[i][j][idx];
@@ -118,7 +116,7 @@ template SignedLineFunctionEqualNoCarry(n, k, m_out){
 // Output:
 //  Q is 6 x 2 x k array representing element of Fp12 equal to:
 //  (y_1 - y_2) X + (x_2 - x_1) Y + (x_1 y_2 - x_2 y_1)
-template LineFunctionUnequal(n, k, q) {
+template<std::size_t n, std::size_t k, std::size_t q> void LineFunctionUnequal() {
     signal input P[2][2][k];
     signal input Q[2][6][2][k];
 
@@ -150,7 +148,7 @@ template LineFunctionUnequal(n, k, q) {
             for (std::size_t idx = 0; idx < 2 * k - 1; idx++) {
                 reduce[i][j].in[idx] <== nocarry.out[i][j][idx];
             }
-        }	
+        }
     }
 
     // max overflow register size is 3 * k^2 * 2^{3n}
@@ -162,14 +160,14 @@ template LineFunctionUnequal(n, k, q) {
             }
         }
     }
-    
+
     for (int i = 0; i < 6; i++) {
         for (std::size_t j = 0; j < 2; j++) {
             for (std::size_t idx = 0; idx < k; idx++) {
             out[i][j][idx] <== carry.out[i][j][idx];
             }
         }
-    }    
+    }
 }
 
 
@@ -180,7 +178,7 @@ template LineFunctionUnequal(n, k, q) {
 // Output: 
 //  out is 6 x 2 x k array representing element of Fp12 equal to:
 //  3 x^2 (-X + x) + 2 y (Y - y)
-template LineFunctionEqual(n, k, q) {
+template<std::size_t n, std::size_t k, std::size_t q> void LineFunctionEqual() {
     signal input P[2][k];
     signal input Q[2][6][2][k];
 
@@ -203,9 +201,9 @@ template LineFunctionEqual(n, k, q) {
             }
         }
     }
-    
+
     std::size_t LOGK3 = log_ceil((2*k-1)*(3*k*k) + 1);
-    component reduce[6][4]; 
+    component reduce[6][4];
     for (int i = 0; i < 6; i++) {
         for (std::size_t j = 0; j < 2; j++) {
             reduce[i][j] = PrimeReduce(n, k, 2 * k - 2, q, 4 * n + LOGK3);
@@ -215,7 +213,7 @@ template LineFunctionEqual(n, k, q) {
             for (std::size_t idx = 0; idx < 3 * k - 2; idx++) {
                 reduce[i][j].in[idx] <== nocarry.out[i][j][idx];
             }
-        }	
+        }
     }
 
     // max overflow register size is (2k - 1) * (3k^2+1) * 2^{4n} assuming 2k<=2^n
@@ -227,14 +225,14 @@ template LineFunctionEqual(n, k, q) {
             }
         }
     }
-    
+
     for (int i = 0; i < 6; i++) {
         for (std::size_t j = 0; j < 2; j++) {
             for (std::size_t idx = 0; idx < k; idx++) {
             out[i][j][idx] <== carry.out[i][j][idx];
             }
         }
-    }    
+    }
 }
 
 
@@ -247,7 +245,7 @@ template LineFunctionEqual(n, k, q) {
 // Output:
 //  out = g * l_{P0, P1}(Q) as element of Fp12 with carry 
 //  out is 6 x 2 x k
-template Fp12MultiplyWithLineUnequal(n, k, kg, overflowg, q){
+template<std::size_t n, std::size_t k, std::size_t kg, std::size_t overflowg, std::size_t q> void Fp12MultiplyWithLineUnequal(){
     signal input g[6][2][kg];
     signal input P[2][2][k];
     signal input Q[2][6][2][k];
@@ -264,9 +262,9 @@ template Fp12MultiplyWithLineUnequal(n, k, kg, overflowg, q){
         line.P[l][j][idx] <== P[l][j][idx];
     for(std::size_t l=0; l<2; l++)for(std::size_t i=0; i<6; i++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
         line.Q[l][i][j][idx] <== Q[l][i][j][idx];
-    
+
     component mult = SignedFp12MultiplyNoCarryUnequal(n, kg, 2*k - 1, overflowg + 2*n + LOGK2); // 6 x 2 x (2k + kg - 2) registers < 3k * min(kg, 2k - 1) * 6 * (2+XI0)* 2^{overflowg + 2n} )
-    
+
     for(std::size_t i=0; i<6; i++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<kg; idx++)
         mult.a[i][j][idx] <== g[i][j][idx];
     for(std::size_t i=0; i<6; i++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<2*k-1; idx++)
@@ -276,7 +274,7 @@ template Fp12MultiplyWithLineUnequal(n, k, kg, overflowg, q){
     component reduce = Fp12Compress(n, k, k + kg - 2, q, overflowg + 3*n + LOGK3); // 6 x 2 x k registers in [0, 3 k * min(kg, 2k - 1) * 6*(2+XI0) * (k + kg - 1) *  2^{overflowg + 3n} )
     for(std::size_t i=0; i<6; i++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<2*k + kg - 2; idx++)
         reduce.in[i][j][idx] <== mult.out[i][j][idx];
-    
+
     component carry = SignedFp12CarryModP(n, k, overflowg + 3*n + LOGK3, q);
 
     for(std::size_t i=0; i<6; i++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
@@ -299,9 +297,9 @@ template Fp12MultiplyWithLineUnequal(n, k, kg, overflowg, q){
 //  x in [0, 2^250) and x < r  (we will use this template when x has few significant bits in base 2)
 //  q has k registers in [0, 2^n)
 //  P != O so the order of P in E(Fq) is r, so [i]P != [j]P for i != j in Z/r 
-template MillerLoop(n, k, b, x, q){
+template<std::size_t n, std::size_t k, std::size_t b, std::size_t x, std::size_t q> void MillerLoop(){
     signal input in[6][2][k];
-    signal input P[2][k]; 
+    signal input P[2][k];
     signal input Q[2][6][2][k];
 
     signal output out[6][2][k];
@@ -312,7 +310,7 @@ template MillerLoop(n, k, b, x, q){
     std::size_t LOGK2 = log_ceil(36*(2+XI0)*(2+XI0) * k*k);
     std::size_t LOGK3 = log_ceil(36*(2+XI0)*(2+XI0) * k*k*(2*k-1));
     assert( 4*n + LOGK3 < 251 );
-    
+
 
     std::size_t Bits[250]; // length is k * n
     std::size_t BitLength;
@@ -325,7 +323,7 @@ template MillerLoop(n, k, b, x, q){
         }
     }
 
-    signal Pintermed[BitLength][2][k]; 
+    signal Pintermed[BitLength][2][k];
     signal f[BitLength][6][2][k];
 
     component Pdouble[BitLength];
@@ -335,81 +333,81 @@ template MillerLoop(n, k, b, x, q){
     component compress[BitLength];
     component nocarry[BitLength];
     component Padd[SigBits];
-    component fadd[SigBits]; 
-    component fadd_pre[SigBits]; 
+    component fadd[SigBits];
+    component fadd_pre[SigBits];
     std::size_t curid=0;
 
     for(std::size_t i=BitLength - 1; i>=0; i--){
         if( i == BitLength - 1 ){
-            // f = 1 
+            // f = 1
             for(std::size_t l=0; l<6; l++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++){
                 f[i][l][j][idx] <== in[l][j][idx];
             }
             for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
                 Pintermed[i][j][idx] <== P[j][idx];
         }else{
-            // compute fdouble[i] = f[i+1]^2 * l_{Pintermed[i+1], Pintermed[i+1]}(Q) 
+            // compute fdouble[i] = f[i+1]^2 * l_{Pintermed[i+1], Pintermed[i+1]}(Q)
             square[i] = SignedFp12MultiplyNoCarry(n, k, 2*n + 4 + LOGK); // 6 x 2 x 2k-1 registers in [0, 6 * k * (2+XI0) * 2^{2n} )
             for(std::size_t l=0; l<6; l++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++){
                 square[i].a[l][j][idx] <== f[i+1][l][j][idx];
                 square[i].b[l][j][idx] <== f[i+1][l][j][idx];
             }
 
-            line[i] = LineFunctionEqual(n, k, q); // 6 x 2 x k registers in [0, 2^n) 
+            line[i] = LineFunctionEqual(n, k, q); // 6 x 2 x k registers in [0, 2^n)
             for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
-                line[i].P[j][idx] <== Pintermed[i+1][j][idx];            
+                line[i].P[j][idx] <== Pintermed[i+1][j][idx];
             for(std::size_t eps=0; eps<2; eps++)
                 for(std::size_t l=0; l<6; l++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
                     line[i].Q[eps][l][j][idx] <== Q[eps][l][j][idx];
 
-            nocarry[i] = SignedFp12MultiplyNoCarryUnequal(n, 2*k-1, k, 3*n + LOGK2); // 6 x 2 x 3k-2 registers < (6 * (2+XI0))^2 * k^2 * 2^{3n} ) 
+            nocarry[i] = SignedFp12MultiplyNoCarryUnequal(n, 2*k-1, k, 3*n + LOGK2); // 6 x 2 x 3k-2 registers < (6 * (2+XI0))^2 * k^2 * 2^{3n} )
             for(std::size_t l=0; l<6; l++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<2*k-1; idx++)
                 nocarry[i].a[l][j][idx] <== square[i].out[l][j][idx];
-            
+
             for(std::size_t l=0; l<6; l++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
                 nocarry[i].b[l][j][idx] <== line[i].out[l][j][idx];
-            
+
             compress[i] = Fp12Compress(n, k, 2*k-2, q, 4*n + LOGK3); // 6 x 2 x k registers < (6 * (2+ XI0))^2 * k^2 * (2k-1) * 2^{4n} )
             for(std::size_t l=0; l<6; l++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<3*k-2; idx++)
                 compress[i].in[l][j][idx] <== nocarry[i].out[l][j][idx];
 
             fdouble[i] = SignedFp12CarryModP(n, k, 4*n + LOGK3, q);
             for(std::size_t l=0; l<6; l++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
-                fdouble[i].in[l][j][idx] <== compress[i].out[l][j][idx]; 
+                fdouble[i].in[l][j][idx] <== compress[i].out[l][j][idx];
 
-            Pdouble[i] = EllipticCurveDouble(n, k, 0, b, q);  
+            Pdouble[i] = EllipticCurveDouble(n, k, 0, b, q);
             for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
-                Pdouble[i].in[j][idx] <== Pintermed[i+1][j][idx]; 
-            
+                Pdouble[i].in[j][idx] <== Pintermed[i+1][j][idx];
+
             if(Bits[i] == 0){
                 for(std::size_t l=0; l<6; l++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
-                    f[i][l][j][idx] <== fdouble[i].out[l][j][idx]; 
+                    f[i][l][j][idx] <== fdouble[i].out[l][j][idx];
                 for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
                     Pintermed[i][j][idx] <== Pdouble[i].out[j][idx];
             }else{
-                // fadd[curid] = fdouble * in * l_{Pdouble[i], P}(Q) 
-                fadd_pre[curid] = Fp12Multiply(n, k, q); 
+                // fadd[curid] = fdouble * in * l_{Pdouble[i], P}(Q)
+                fadd_pre[curid] = Fp12Multiply(n, k, q);
                 for(std::size_t l=0; l<6; l++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++){
                     fadd_pre[curid].a[l][j][idx] <== fdouble[i].out[l][j][idx];
-                    fadd_pre[curid].b[l][j][idx] <== in[l][j][idx]; 
+                    fadd_pre[curid].b[l][j][idx] <== in[l][j][idx];
                 }
 
-                fadd[curid] = Fp12MultiplyWithLineUnequal(n, k, k, n, q); 
+                fadd[curid] = Fp12MultiplyWithLineUnequal(n, k, k, n, q);
                 for(std::size_t l=0; l<6; l++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
                     fadd[curid].g[l][j][idx] <== fadd_pre[curid].out[l][j][idx];
-                
+
                 for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++){
-                    fadd[curid].P[0][j][idx] <== Pdouble[i].out[j][idx];            
-                    fadd[curid].P[1][j][idx] <== P[j][idx];            
+                    fadd[curid].P[0][j][idx] <== Pdouble[i].out[j][idx];
+                    fadd[curid].P[1][j][idx] <== P[j][idx];
                 }
                 for(std::size_t eps=0; eps<2; eps++)for(std::size_t l=0; l<6; l++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
                     fadd[curid].Q[eps][l][j][idx] <== Q[eps][l][j][idx];
 
                 for(std::size_t l=0; l<6; l++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
-                    f[i][l][j][idx] <== fadd[curid].out[l][j][idx]; 
+                    f[i][l][j][idx] <== fadd[curid].out[l][j][idx];
 
-                // Padd[curid] = Pdouble[i] + P 
-                Padd[curid] = EllipticCurveAddUnequal(n, k, q); 
+                // Padd[curid] = Pdouble[i] + P
+                Padd[curid] = EllipticCurveAddUnequal(n, k, q);
                 for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++){
                     Padd[curid].a[j][idx] <== Pdouble[i].out[j][idx];
                     Padd[curid].b[j][idx] <== P[j][idx];
@@ -417,7 +415,7 @@ template MillerLoop(n, k, b, x, q){
 
                 for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
                     Pintermed[i][j][idx] <== Padd[curid].out[j][idx];
-                
+
                 curid++;
             }
         }
@@ -425,8 +423,8 @@ template MillerLoop(n, k, b, x, q){
     for(std::size_t l=0; l<6; l++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
         out[l][j][idx] <== f[0][l][j][idx];
     for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
-        xP[j][idx] <== Pintermed[0][j][idx]; 
-    
+        xP[j][idx] <== Pintermed[0][j][idx];
+
 }
 
 
@@ -441,24 +439,24 @@ template MillerLoop(n, k, b, x, q){
 //  q has k registers in [0, 2^n)
 //  r is prime
 //  P != O so the order of P in E(Fq) is r, so [i]P != [j]P for i != j in Z/r 
-template BLSMillerLoop(n, k, q){
-    signal input P[2][k]; 
+template<std::size_t n, std::size_t k, std::size_t q> void BLSMillerLoop(){
+    signal input P[2][k];
     signal input Q[2][6][2][k];
     signal output out[6][2][k];
 
     std::size_t XI0 = 1;
     std::size_t b = 4; // Y^2 = X^3 + 4
-    std::size_t x = get_BLS12_381_parameter();
+    std::size_t x = BLS12381_PARAMETER;
 
-    // fx[i] = f_{x^{i+1}} 
-    component fx[4]; 
+    // fx[i] = f_{x^{i+1}}
+    component fx[4];
     for(std::size_t e=0; e<4; e++){
         fx[e] = MillerLoop(n, k, b, x, q);
         if( e == 0 ){
             for(std::size_t i=0; i<6; i++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++){
                 if(i == 0 && j == 0 && idx == 0)
                     fx[e].in[i][j][idx] <== 1;
-                else    
+                else
                     fx[e].in[i][j][idx] <== 0;
             }
             for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
@@ -467,32 +465,32 @@ template BLSMillerLoop(n, k, q){
             for(std::size_t i=0; i<6; i++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
                 fx[e].in[i][j][idx] <== fx[e - 1].out[i][j][idx];
             for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
-                fx[e].P[j][idx] <== fx[e - 1].xP[j][idx];            
+                fx[e].P[j][idx] <== fx[e - 1].xP[j][idx];
         }
         for(std::size_t l=0; l<2; l++)for(std::size_t i=0; i<6; i++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
             fx[e].Q[l][i][j][idx] <== Q[l][i][j][idx];
     }
-    
-    // f_{x^4} * l_{x^4, 1}(P,Q) 
-    component fx4l = Fp12MultiplyWithLineUnequal(n, k, k, n, q); 
+
+    // f_{x^4} * l_{x^4, 1}(P,Q)
+    component fx4l = Fp12MultiplyWithLineUnequal(n, k, k, n, q);
     // assert( 4*n + log_ceil(12 * (2*k-1) *k * k) + 2 < 252 );  // need this to run MillerLoop anyways
     for(std::size_t l=0; l<6; l++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++){
         fx4l.g[l][j][idx] <== fx[3].out[l][j][idx];
     }
     for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++){
-        fx4l.P[0][j][idx] <== fx[3].xP[j][idx];            
-        fx4l.P[1][j][idx] <== P[j][idx];            
+        fx4l.P[0][j][idx] <== fx[3].xP[j][idx];
+        fx4l.P[1][j][idx] <== P[j][idx];
     }
     for(std::size_t l=0; l<2; l++)for(std::size_t i=0; i<6; i++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
         fx4l.Q[l][i][j][idx] <== Q[l][i][j][idx];
-    
+
     /* Don't need this, vertical lines can be omitted due to final exponentiation:
-    // f_{x^2} * l_{r,x^2}(P,Q) where l_{r,x^2}(P,Q) = Q.x - ([x^2]P).x 
+    // f_{x^2} * l_{r,x^2}(P,Q) where l_{r,x^2}(P,Q) = Q.x - ([x^2]P).x
     std::size_t LOGK2 = log_ceil(6*(2+XI0)*k*k);
     component fx2l = SignedFp12MultiplyNoCarryCompress(n, k, q, n, 3*n + LOGK2); // registers in [0, 6*(2+XI0)*k^2*2^{3n} )
     for(std::size_t i=0; i<6; i++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++){
         fx2l.a[i][j][idx] <== fx[1].out[i][j][idx];
-        
+
         if(i == 0 && j == 0)
             fx2l.b[i][j][idx] <== Q[0][i][j][idx] - fx[1].xP[0][idx];
         else
@@ -514,13 +512,13 @@ template BLSMillerLoop(n, k, q){
         fr.a[i][j][idx] <== fx4l.out[i][j][idx];
         fr.b[i][j][idx] <== inv.out[i][j][idx];
     }
-    
+
     for(std::size_t i=0; i<6; i++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
         out[i][j][idx] <== fr.out[i][j][idx];
 }
 
-template TatePairing(n, k, q){
-    signal input P[2][k]; 
+template<std::size_t n, std::size_t k, std::size_t q> void TatePairing(){
+    signal input P[2][k];
     signal input Q[2][6][2][k];
     signal output out[6][2][k];
 
@@ -529,13 +527,13 @@ template TatePairing(n, k, q){
         miller.P[i][idx] <== P[i][idx];
     for(std::size_t i=0; i<2; i++)for(std::size_t l=0; l<6; l++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
         miller.Q[i][l][j][idx] <== Q[i][l][j][idx];
-    
+
     component finalexp = FinalExponentiate(n, k, q);
     for(std::size_t i=0; i<6; i++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
         finalexp.in[i][j][idx] <== miller.out[i][j][idx];
 
     for(std::size_t i=0; i<6; i++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
-        out[i][j][idx] <== finalexp.out[i][j][idx]; 
+        out[i][j][idx] <== finalexp.out[i][j][idx];
 
     /*
     // check out[i][j] < p since we never did that previously
@@ -574,7 +572,7 @@ template SignedLineFunctionUnequalNoCarryFp2(n, k, m_out){
     for(std::size_t i = 0; i < 2; i ++) {
         for(std::size_t j=0; j<k; j++){
             Xmult.a[i][j] <== P[0][1][i][j] - P[1][1][i][j];
-            
+
             Ymult.a[i][j] <== P[1][0][i][j] - P[0][0][i][j];
         }
     }
@@ -582,22 +580,22 @@ template SignedLineFunctionUnequalNoCarryFp2(n, k, m_out){
         Xmult.b[0][idx] <== Q[0][idx];
         Xmult.b[1][idx] <== 0;
 
-        Ymult.b[0][idx] <== Q[1][idx]; 
+        Ymult.b[0][idx] <== Q[1][idx];
         Ymult.b[1][idx] <== 0;
-    } 
-    
-    component x1y2 = BigMultShortLong2D(n, k, 2); // 2k-1 registers in [0, 2k*B^2) 
+    }
+
+    component x1y2 = BigMultShortLong2D(n, k, 2); // 2k-1 registers in [0, 2k*B^2)
     component x2y1 = BigMultShortLong2D(n, k, 2);
     for(std::size_t i = 0; i < 2; i ++) {
         for(std::size_t j=0; j<k; j++){
-            x1y2.a[i][j] <== P[0][0][i][j]; 
+            x1y2.a[i][j] <== P[0][0][i][j];
             x1y2.b[i][j] <== P[1][1][i][j];
-            
-            x2y1.a[i][j] <== P[1][0][i][j]; 
+
+            x2y1.a[i][j] <== P[1][0][i][j];
             x2y1.b[i][j] <== P[0][1][i][j];
         }
     }
-    
+
     for(std::size_t idx=0; idx<2*k-1; idx++){
         out[0][0][idx] <== 0;
         out[0][1][idx] <== 0;
@@ -628,7 +626,7 @@ template SignedLineFunctionUnequalNoCarryFp2(n, k, m_out){
 // Then out has registers abs val < 12k^2*B^3
 // m_out is the expected max number of bits in the output registers
 template SignedLineFunctionEqualNoCarryFp2(n, k, m_out){
-    signal input P[2][2][k]; 
+    signal input P[2][2][k];
     signal input Q[2][k];
     signal output out[6][2][3*k-2];
     std::size_t LOGK = log_ceil(k);
@@ -657,8 +655,8 @@ template SignedLineFunctionEqualNoCarryFp2(n, k, m_out){
             y_sq2.a[i][j] <== 2*P[1][i][j];
             y_sq2.b[i][j] <== P[1][i][j];
         }
-    } 
-    
+    }
+
     component Xmult = SignedFp2MultiplyNoCarryUnequal(n, 2*k-1, k, 3*n + 2*LOGK + 3); // 3k-2 registers abs val < 12 * k^2 * 2^{3n})
     for(std::size_t idx=0; idx<2*k-1; idx++){
         Xmult.a[0][idx] <== x_sq3.out[0][idx] - x_sq3.out[2][idx];
@@ -669,7 +667,7 @@ template SignedLineFunctionEqualNoCarryFp2(n, k, m_out){
         Xmult.b[1][idx] <== 0;
     }
 
-    component Ymult = SignedFp2MultiplyNoCarryUnequal(n, k, k, 2*n + LOGK + 2); // 2k-1 registers abs val < 4k*2^{2n} 
+    component Ymult = SignedFp2MultiplyNoCarryUnequal(n, k, k, 2*n + LOGK + 2); // 2k-1 registers abs val < 4k*2^{2n}
     for(std::size_t idx=0; idx < k; idx++){
         Ymult.a[0][idx] <== 2*P[1][0][idx];
         Ymult.a[1][idx] <== 2*P[1][1][idx];
@@ -678,7 +676,7 @@ template SignedLineFunctionEqualNoCarryFp2(n, k, m_out){
         Ymult.b[0][idx] <== Q[1][idx];
         Ymult.b[1][idx] <== 0;
     }
-    
+
     for(std::size_t idx=0; idx<3*k-2; idx++){
         out[1][0][idx] <== 0;
         out[1][1][idx] <== 0;
@@ -711,7 +709,7 @@ template SignedLineFunctionEqualNoCarryFp2(n, k, m_out){
 // Output:
 //  Q is 6 x 2 x k array representing element of Fp12 equal to:
 //  w^3 (y_1 - y_2) X + w^4 (x_2 - x_1) Y + w (x_1 y_2 - x_2 y_1)
-template LineFunctionUnequalFp2(n, k, q) {
+template<std::size_t n, std::size_t k, std::size_t q> void LineFunctionUnequalFp2() {
     signal input P[2][2][2][k];
     signal input Q[2][k];
 
@@ -742,7 +740,7 @@ template LineFunctionUnequalFp2(n, k, q) {
             for (std::size_t idx = 0; idx < 2 * k - 1; idx++) {
                 reduce[i][j].in[idx] <== nocarry.out[i][j][idx];
             }
-        }	
+        }
     }
 
     // max overflow register size is 2k^2 * 2^{3n}
@@ -754,14 +752,14 @@ template LineFunctionUnequalFp2(n, k, q) {
             }
         }
     }
-    
+
     for (int i = 0; i < 6; i++) {
         for (std::size_t j = 0; j < 2; j++) {
             for (std::size_t idx = 0; idx < k; idx++) {
             out[i][j][idx] <== carry.out[i][j][idx];
             }
         }
-    }    
+    }
 }
 
 // Assuming curve is of form Y^2 = X^3 + b for now (a = 0) for better register bounds 
@@ -771,7 +769,7 @@ template LineFunctionUnequalFp2(n, k, q) {
 // Output: 
 //  out is 6 x 2 x k array representing element of Fp12 equal to:
 //  (3x^3 - 2y^2) + w^2 (-3 x^2 X) + w^3 (2 y Y)
-template LineFunctionEqualFp2(n, k, q) {
+template<std::size_t n, std::size_t k, std::size_t q> void LineFunctionEqualFp2() {
     signal input P[2][2][k];
     signal input Q[2][k];
 
@@ -792,9 +790,9 @@ template LineFunctionEqualFp2(n, k, q) {
             nocarry.Q[i][idx] <== Q[i][idx];
         }
     }
-    
+
     std::size_t LOGK3 = log_ceil((2*k-1)*12*k*k + 1);
-    component reduce[6][4]; 
+    component reduce[6][4];
     for (int i = 0; i < 6; i++) {
         for (std::size_t j = 0; j < 2; j++) {
             reduce[i][j] = PrimeReduce(n, k, 2 * k - 2, q, 4 * n + LOGK3);
@@ -804,7 +802,7 @@ template LineFunctionEqualFp2(n, k, q) {
             for (std::size_t idx = 0; idx < 3 * k - 2; idx++) {
                 reduce[i][j].in[idx] <== nocarry.out[i][j][idx];
             }
-        }	
+        }
     }
 
     // max overflow register size is (2k - 1) * 12k^2 * 2^{4n}
@@ -816,14 +814,14 @@ template LineFunctionEqualFp2(n, k, q) {
             }
         }
     }
-    
+
     for (int i = 0; i < 6; i++) {
         for (std::size_t j = 0; j < 2; j++) {
             for (std::size_t idx = 0; idx < k; idx++) {
             out[i][j][idx] <== carry.out[i][j][idx];
             }
         }
-    }    
+    }
 }
 
 
@@ -836,7 +834,7 @@ template LineFunctionEqualFp2(n, k, q) {
 // Output:
 //  out = g * l_{P0, P1}(Q) as element of Fp12 with carry 
 //  out is 6 x 2 x k
-template Fp12MultiplyWithLineUnequalFp2(n, k, kg, overflowg, q){
+template<std::size_t n, std::size_t k, std::size_t kg, std::size_t overflowg, std::size_t q> void Fp12MultiplyWithLineUnequalFp2(){
     signal input g[6][2][kg];
     signal input P[2][2][2][k];
     signal input Q[2][k];
@@ -853,19 +851,19 @@ template Fp12MultiplyWithLineUnequalFp2(n, k, kg, overflowg, q){
         line.P[i][j][l][idx] <== P[i][j][l][idx];
     for(std::size_t l=0; l<2; l++)for(std::size_t idx=0; idx<k; idx++)
         line.Q[l][idx] <== Q[l][idx];
-    
-    component mult = SignedFp12MultiplyNoCarryUnequal(n, kg, 2*k - 1, overflowg + 2*n + LOGK2); // 6 x 2 x (2k + kg - 2) registers abs val < 12k * min(kg, 2k - 1) * 6 * (2+XI0)* 2^{overflowg + 2n} 
-    
+
+    component mult = SignedFp12MultiplyNoCarryUnequal(n, kg, 2*k - 1, overflowg + 2*n + LOGK2); // 6 x 2 x (2k + kg - 2) registers abs val < 12k * min(kg, 2k - 1) * 6 * (2+XI0)* 2^{overflowg + 2n}
+
     for(std::size_t i=0; i<6; i++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<kg; idx++)
         mult.a[i][j][idx] <== g[i][j][idx];
     for(std::size_t i=0; i<6; i++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<2*k-1; idx++)
         mult.b[i][j][idx] <== line.out[i][j][idx];
 
 
-    component reduce = Fp12Compress(n, k, k + kg - 2, q, overflowg + 3*n + LOGK3); // 6 x 2 x k registers abs val < 12 k * min(kg, 2k - 1) * 6*(2+XI0) * (k + kg - 1) *  2^{overflowg + 3n} 
+    component reduce = Fp12Compress(n, k, k + kg - 2, q, overflowg + 3*n + LOGK3); // 6 x 2 x k registers abs val < 12 k * min(kg, 2k - 1) * 6*(2+XI0) * (k + kg - 1) *  2^{overflowg + 3n}
     for(std::size_t i=0; i<6; i++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<2*k + kg - 2; idx++)
         reduce.in[i][j][idx] <== mult.out[i][j][idx];
-    
+
     component carry = SignedFp12CarryModP(n, k, overflowg + 3*n + LOGK3, q);
 
     for(std::size_t i=0; i<6; i++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
@@ -889,8 +887,8 @@ template Fp12MultiplyWithLineUnequalFp2(n, k, kg, overflowg, q){
 //  q has k registers in [0, 2^n)
 //  P != O so the order of P in E(Fq) is r, so [i]P != [j]P for i != j in Z/r 
 //  X^3 + b = 0 has no solution in Fq2, i.e., the y-coordinate of P cannot be 0.
-template MillerLoopFp2(n, k, b, x, q){
-    signal input P[2][2][k]; 
+template<std::size_t n, std::size_t k, std::size_t b, std::size_t x, std::size_t q> void MillerLoopFp2(){
+    signal input P[2][2][k];
     signal input Q[2][k];
 
     signal output out[6][2][k];
@@ -901,7 +899,7 @@ template MillerLoopFp2(n, k, b, x, q){
     std::size_t LOGK2 = log_ceil(36*(2+XI0)*(2+XI0) * k*k);
     std::size_t LOGK3 = log_ceil(36*(2+XI0)*(2+XI0) * k*k*(2*k-1));
     assert( 4*n + LOGK3 < 251 );
-    
+
     std::size_t Bits[250];
     std::size_t BitLength;
     std::size_t SigBits=0;
@@ -913,7 +911,7 @@ template MillerLoopFp2(n, k, b, x, q){
         }
     }
 
-    signal R[BitLength][2][2][k]; 
+    signal R[BitLength][2][2][k];
     signal f[BitLength][6][2][k];
 
     component Pdouble[BitLength];
@@ -923,76 +921,76 @@ template MillerLoopFp2(n, k, b, x, q){
     component compress[BitLength];
     component nocarry[BitLength];
     component Padd[SigBits];
-    component fadd[SigBits]; 
+    component fadd[SigBits];
     std::size_t curid=0;
 
     for(std::size_t i=BitLength - 1; i>=0; i--){
         if( i == BitLength - 1 ){
-            // f = 1 
+            // f = 1
             for(std::size_t l=0; l<6; l++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++){
                 if(l==0 && j==0 && idx==0)
                     f[i][l][j][idx] <== 1;
-                else    
+                else
                     f[i][l][j][idx] <== 0;
             }
             for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)for(std::size_t l=0; l<2; l++)
                 R[i][j][l][idx] <== P[j][l][idx];
         }else{
-            // compute fdouble[i] = f[i+1]^2 * l_{R[i+1], R[i+1]}(Q) 
+            // compute fdouble[i] = f[i+1]^2 * l_{R[i+1], R[i+1]}(Q)
             square[i] = SignedFp12MultiplyNoCarry(n, k, 2*n + 4 + LOGK); // 6 x 2 x 2k-1 registers in [0, 6 * k * (2+XI0) * 2^{2n} )
             for(std::size_t l=0; l<6; l++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++){
                 square[i].a[l][j][idx] <== f[i+1][l][j][idx];
                 square[i].b[l][j][idx] <== f[i+1][l][j][idx];
             }
-            
-            line[i] = LineFunctionEqualFp2(n, k, q); // 6 x 2 x k registers in [0, 2^n) 
+
+            line[i] = LineFunctionEqualFp2(n, k, q); // 6 x 2 x k registers in [0, 2^n)
             for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)for(std::size_t l=0; l<2; l++)
-                line[i].P[j][l][idx] <== R[i+1][j][l][idx];            
+                line[i].P[j][l][idx] <== R[i+1][j][l][idx];
             for(std::size_t eps=0; eps<2; eps++)
                 for(std::size_t idx=0; idx<k; idx++)
                     line[i].Q[eps][idx] <== Q[eps][idx];
-            
-            nocarry[i] = SignedFp12MultiplyNoCarryUnequal(n, 2*k-1, k, 3*n + LOGK2); // 6 x 2 x 3k-2 registers < (6 * (2+XI0))^2 * k^2 * 2^{3n} ) 
+
+            nocarry[i] = SignedFp12MultiplyNoCarryUnequal(n, 2*k-1, k, 3*n + LOGK2); // 6 x 2 x 3k-2 registers < (6 * (2+XI0))^2 * k^2 * 2^{3n} )
             for(std::size_t l=0; l<6; l++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<2*k-1; idx++)
                 nocarry[i].a[l][j][idx] <== square[i].out[l][j][idx];
-            
+
             for(std::size_t l=0; l<6; l++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
                 nocarry[i].b[l][j][idx] <== line[i].out[l][j][idx];
-            
+
             compress[i] = Fp12Compress(n, k, 2*k-2, q, 4*n + LOGK3); // 6 x 2 x k registers < (6 * (2+ XI0))^2 * k^2 * (2k-1) * 2^{4n} )
             for(std::size_t l=0; l<6; l++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<3*k-2; idx++)
                 compress[i].in[l][j][idx] <== nocarry[i].out[l][j][idx];
-            
+
             fdouble[i] = SignedFp12CarryModP(n, k, 4*n + LOGK3, q);
             for(std::size_t l=0; l<6; l++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
-                fdouble[i].in[l][j][idx] <== compress[i].out[l][j][idx]; 
-            
-            Pdouble[i] = EllipticCurveDoubleFp2(n, k, [0,0], b, q);  
+                fdouble[i].in[l][j][idx] <== compress[i].out[l][j][idx];
+
+            Pdouble[i] = EllipticCurveDoubleFp2(n, k, [0,0], b, q);
             for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)for(std::size_t l=0; l<2; l++)
-                Pdouble[i].in[j][l][idx] <== R[i+1][j][l][idx]; 
-            
+                Pdouble[i].in[j][l][idx] <== R[i+1][j][l][idx];
+
             if(Bits[i] == 0){
                 for(std::size_t l=0; l<6; l++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
-                    f[i][l][j][idx] <== fdouble[i].out[l][j][idx]; 
+                    f[i][l][j][idx] <== fdouble[i].out[l][j][idx];
                 for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)for(std::size_t l=0; l<2; l++)
                     R[i][j][l][idx] <== Pdouble[i].out[j][l][idx];
             }else{
-                fadd[curid] = Fp12MultiplyWithLineUnequalFp2(n, k, k, n, q); 
+                fadd[curid] = Fp12MultiplyWithLineUnequalFp2(n, k, k, n, q);
                 for(std::size_t l=0; l<6; l++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
                     fadd[curid].g[l][j][idx] <== fdouble[i].out[l][j][idx];
-                
+
                 for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)for(std::size_t l=0; l<2; l++){
-                    fadd[curid].P[0][j][l][idx] <== Pdouble[i].out[j][l][idx];            
-                    fadd[curid].P[1][j][l][idx] <== P[j][l][idx];            
+                    fadd[curid].P[0][j][l][idx] <== Pdouble[i].out[j][l][idx];
+                    fadd[curid].P[1][j][l][idx] <== P[j][l][idx];
                 }
                 for(std::size_t eps=0; eps<2; eps++)for(std::size_t idx=0; idx<k; idx++)
                     fadd[curid].Q[eps][idx] <== Q[eps][idx];
 
                 for(std::size_t l=0; l<6; l++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
-                    f[i][l][j][idx] <== fadd[curid].out[l][j][idx]; 
+                    f[i][l][j][idx] <== fadd[curid].out[l][j][idx];
 
-                // Padd[curid] = Pdouble[i] + P 
-                Padd[curid] = EllipticCurveAddUnequalFp2(n, k, q); 
+                // Padd[curid] = Pdouble[i] + P
+                Padd[curid] = EllipticCurveAddUnequalFp2(n, k, q);
                 for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)for(std::size_t l=0; l<2; l++){
                     Padd[curid].a[j][l][idx] <== Pdouble[i].out[j][l][idx];
                     Padd[curid].b[j][l][idx] <== P[j][l][idx];
@@ -1000,7 +998,7 @@ template MillerLoopFp2(n, k, b, x, q){
 
                 for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)for(std::size_t l=0; l<2; l++)
                     R[i][j][l][idx] <== Padd[curid].out[j][l][idx];
-                
+
                 curid++;
             }
         }
@@ -1008,7 +1006,7 @@ template MillerLoopFp2(n, k, b, x, q){
     for(std::size_t l=0; l<6; l++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
         out[l][j][idx] <== f[0][l][j][idx];
     for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)for(std::size_t l=0; l<2; l++)
-        xP[j][l][idx] <== R[0][j][l][idx]; 
+        xP[j][l][idx] <== R[0][j][l][idx];
 }
 
 
@@ -1025,8 +1023,8 @@ template MillerLoopFp2(n, k, b, x, q){
 //  q has k registers in [0, 2^n)
 //  P != O so the order of P in E(Fq) is r, so [i]P != [j]P for i != j in Z/r 
 //  X^3 + b = 0 has no solution in Fq2, i.e., the y-coordinate of P cannot be 0.
-template MillerLoopFp2Two(n, k, b, x, q){
-    signal input P[2][2][2][k]; 
+template<std::size_t n, std::size_t k, std::size_t b, std::size_t x, std::size_t q> void MillerLoopFp2Two(){
+    signal input P[2][2][2][k];
     signal input Q[2][2][k];
 
     signal output out[6][2][k];
@@ -1036,7 +1034,7 @@ template MillerLoopFp2Two(n, k, b, x, q){
     std::size_t LOGK2 = log_ceil(36*(2+XI0)*(2+XI0) * k*k);
     std::size_t LOGK3 = log_ceil(36*(2+XI0)*(2+XI0) * k*k*(2*k-1));
     assert( 4*n + LOGK3 < 251 );
-    
+
     std::size_t Bits[250]; // length is k * n
     std::size_t BitLength;
     std::size_t SigBits=0;
@@ -1048,7 +1046,7 @@ template MillerLoopFp2Two(n, k, b, x, q){
         }
     }
 
-    signal R[BitLength][2][2][2][k]; 
+    signal R[BitLength][2][2][2][k];
     signal f[BitLength][6][2][k];
 
     component Pdouble[BitLength][2];
@@ -1059,16 +1057,16 @@ template MillerLoopFp2Two(n, k, b, x, q){
     component compress[BitLength];
     component nocarry[BitLength];
     component Padd[SigBits][2];
-    component fadd[SigBits][2]; 
+    component fadd[SigBits][2];
     std::size_t curid=0;
 
     for(std::size_t i=BitLength - 1; i>=0; i--){
         if( i == BitLength - 1 ){
-            // f = 1 
+            // f = 1
             for(std::size_t l=0; l<6; l++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++){
                 if(l==0 && j==0 && idx==0)
                     f[i][l][j][idx] <== 1;
-                else    
+                else
                     f[i][l][j][idx] <== 0;
             }
             for(std::size_t idP=0; idP<2; idP++)
@@ -1082,33 +1080,33 @@ template MillerLoopFp2Two(n, k, b, x, q){
                 square[i].b[l][j][idx] <== f[i+1][l][j][idx];
             }
             for(std::size_t idP=0; idP<2; idP++){
-                line[i][idP] = LineFunctionEqualFp2(n, k, q); // 6 x 2 x k registers in [0, 2^n) 
+                line[i][idP] = LineFunctionEqualFp2(n, k, q); // 6 x 2 x k registers in [0, 2^n)
                 for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)for(std::size_t l=0; l<2; l++)
-                    line[i][idP].P[j][l][idx] <== R[i+1][idP][j][l][idx];            
+                    line[i][idP].P[j][l][idx] <== R[i+1][idP][j][l][idx];
                 for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
                     line[i][idP].Q[j][idx] <== Q[idP][j][idx];
 
-                Pdouble[i][idP] = EllipticCurveDoubleFp2(n, k, [0,0], b, q);  
+                Pdouble[i][idP] = EllipticCurveDoubleFp2(n, k, [0,0], b, q);
                 for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)for(std::size_t l=0; l<2; l++)
-                    Pdouble[i][idP].in[j][l][idx] <== R[i+1][idP][j][l][idx]; 
+                    Pdouble[i][idP].in[j][l][idx] <== R[i+1][idP][j][l][idx];
             }
-            
-            nocarry[i] = SignedFp12MultiplyNoCarryUnequal(n, 2*k-1, k, 3*n + LOGK2); // 6 x 2 x 3k-2 registers < (6 * (2+XI0))^2 * k^2 * 2^{3n} ) 
+
+            nocarry[i] = SignedFp12MultiplyNoCarryUnequal(n, 2*k-1, k, 3*n + LOGK2); // 6 x 2 x 3k-2 registers < (6 * (2+XI0))^2 * k^2 * 2^{3n} )
             for(std::size_t l=0; l<6; l++)for(std::size_t j=0; j<2; j++){
                 for(std::size_t idx=0; idx<2*k-1; idx++)
                     nocarry[i].a[l][j][idx] <== square[i].out[l][j][idx];
                 for(std::size_t idx=0; idx<k; idx++)
                     nocarry[i].b[l][j][idx] <== line[i][0].out[l][j][idx];
             }
-            
+
             compress[i] = Fp12Compress(n, k, 2*k-2, q, 4*n + LOGK3); // 6 x 2 x k registers < (6 * (2+ XI0))^2 * k^2 * (2k-1) * 2^{4n} )
             for(std::size_t l=0; l<6; l++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<3*k-2; idx++)
                 compress[i].in[l][j][idx] <== nocarry[i].out[l][j][idx];
-            
+
             fdouble_0[i] = SignedFp12CarryModP(n, k, 4*n + LOGK3, q);
             for(std::size_t l=0; l<6; l++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
-                fdouble_0[i].in[l][j][idx] <== compress[i].out[l][j][idx]; 
-            
+                fdouble_0[i].in[l][j][idx] <== compress[i].out[l][j][idx];
+
             fdouble[i] = Fp12Multiply(n, k, q);
             for(std::size_t l=0; l<6; l++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++){
                 fdouble[i].a[l][j][idx] <== fdouble_0[i].out[l][j][idx];
@@ -1117,29 +1115,29 @@ template MillerLoopFp2Two(n, k, b, x, q){
 
             if(Bits[i] == 0){
                 for(std::size_t l=0; l<6; l++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
-                    f[i][l][j][idx] <== fdouble[i].out[l][j][idx]; 
+                    f[i][l][j][idx] <== fdouble[i].out[l][j][idx];
                 for(std::size_t idP=0; idP<2; idP++)
                     for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)for(std::size_t l=0; l<2; l++)
                         R[i][idP][j][l][idx] <== Pdouble[i][idP].out[j][l][idx];
             }else{
                 for(std::size_t idP=0; idP<2; idP++){
-                    fadd[curid][idP] = Fp12MultiplyWithLineUnequalFp2(n, k, k, n, q); 
+                    fadd[curid][idP] = Fp12MultiplyWithLineUnequalFp2(n, k, k, n, q);
                     for(std::size_t l=0; l<6; l++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++){
                         if(idP == 0)
                             fadd[curid][idP].g[l][j][idx] <== fdouble[i].out[l][j][idx];
                         else
                             fadd[curid][idP].g[l][j][idx] <== fadd[curid][idP-1].out[l][j][idx];
                     }
-                
+
                     for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)for(std::size_t l=0; l<2; l++){
-                        fadd[curid][idP].P[0][j][l][idx] <== Pdouble[i][idP].out[j][l][idx]; 
-                        fadd[curid][idP].P[1][j][l][idx] <== P[idP][j][l][idx];            
+                        fadd[curid][idP].P[0][j][l][idx] <== Pdouble[i][idP].out[j][l][idx];
+                        fadd[curid][idP].P[1][j][l][idx] <== P[idP][j][l][idx];
                     }
                     for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
                         fadd[curid][idP].Q[j][idx] <== Q[idP][j][idx];
 
-                    // Padd[curid][idP] = Pdouble[i][idP] + P[idP] 
-                    Padd[curid][idP] = EllipticCurveAddUnequalFp2(n, k, q); 
+                    // Padd[curid][idP] = Pdouble[i][idP] + P[idP]
+                    Padd[curid][idP] = EllipticCurveAddUnequalFp2(n, k, q);
                     for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)for(std::size_t l=0; l<2; l++){
                         Padd[curid][idP].a[j][l][idx] <== Pdouble[i][idP].out[j][l][idx];
                         Padd[curid][idP].b[j][l][idx] <== P[idP][j][l][idx];
@@ -1147,10 +1145,10 @@ template MillerLoopFp2Two(n, k, b, x, q){
 
                     for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)for(std::size_t l=0; l<2; l++)
                         R[i][idP][j][l][idx] <== Padd[curid][idP].out[j][l][idx];
-                
+
                 }
                 for(std::size_t l=0; l<6; l++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
-                    f[i][l][j][idx] <== fadd[curid][1].out[l][j][idx]; 
+                    f[i][l][j][idx] <== fadd[curid][1].out[l][j][idx];
 
                 curid++;
             }
@@ -1160,18 +1158,16 @@ template MillerLoopFp2Two(n, k, b, x, q){
         out[l][j][idx] <== f[0][l][j][idx];
 }
 
-template OptimalAtePairing(n, k, q){
-    signal input P[2][2][k]; 
+template<std::size_t n, std::size_t k, std::size_t q> void OptimalAtePairing(){
+    signal input P[2][2][k];
     signal input Q[2][k];
     signal output out[6][2][k];
 
-    std::size_t x = get_BLS12_381_parameter();
+    std::size_t x = BLS12381_PARAMETER;
 
     signal negP[2][2][k]; // (x, -y) mod q
     // currently EllipticCurveDoubleFp2 relies on 0 <= in < p so we cannot pass a negative number for negP
     component neg[2];
-    for(std::size_t j=0; j<2; j++){
-        neg[j] = FpNegate(n, k, q); 
         for(std::size_t idx=0; idx<k; idx++)
             neg[j].in[idx] <== P[1][j][idx];
         for(std::size_t idx=0; idx<k; idx++){
@@ -1192,13 +1188,13 @@ template OptimalAtePairing(n, k, q){
             miller.in[i][j][l] <== 0;
         }
     }*/
-    
+
     component finalexp = FinalExponentiate(n, k, q);
     for(std::size_t i=0; i<6; i++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
         finalexp.in[i][j][idx] <== miller.out[i][j][idx];
 
     for(std::size_t i=0; i<6; i++)for(std::size_t j=0; j<2; j++)for(std::size_t idx=0; idx<k; idx++)
-        out[i][j][idx] <== finalexp.out[i][j][idx]; 
+        out[i][j][idx] <== finalexp.out[i][j][idx];
 
     /*
     // check out[i][j] < p since we never did that previously
@@ -1212,4 +1208,3 @@ template OptimalAtePairing(n, k, q){
         lt[i][j].out === 1;
     }*/
 }
-

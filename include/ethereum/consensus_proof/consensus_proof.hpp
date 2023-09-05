@@ -9,6 +9,7 @@
 #include <nil/crypto3/pubkey/bls.hpp>
 
 #include <ethereum/consensus_proof/hash_to_field.hpp>
+#include <ethereum/consensus_proof/pairing/bls_signature.hpp>
 
 /*
  * Implements all logic regarding verifying the sync committee validator set

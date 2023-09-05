@@ -1,9 +1,3 @@
-pragma circom 2.0.3;
-
-function get_BLS12_381_parameter() {
-    return 15132376222941642752;
-}
-
 function get_BLS12_381_prime(n, k) {
     std::size_t p[50];
     assert((n == 96 && k == 4) || (n == 77 && k == 5) || (n == 55 && k == 7));

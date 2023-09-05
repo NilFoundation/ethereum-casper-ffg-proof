@@ -16,7 +16,7 @@ include "fp12.circom";
 
 // in = g0 + g2 w + g4 w^2 + g1 w^3 + g3 w^4 + g5 w^5 where g_i are elements of Fp2
 // out = Compress(in) = [ g2, g3, g4, g5 ] 
-template Fp12CyclotomicCompress(n, k) {
+template<std::size_t n, std::size_t k> void Fp12CyclotomicCompress() {
     signal input in[6][2][k];
     signal output out[4][2][k]; 
 
@@ -38,7 +38,7 @@ template Fp12CyclotomicCompress(n, k) {
 //      g1 = (2 g4 * g5)/g3
 //      g0 = (2 g1^2 - 3 g3 * g4) * (1+u)  + 1    NOTE g0 IS QUARTIC IN THE INPUTS, so I don't think it's worth trying to compute a NoCarry version of g0
 // out0 = g0, out1 = g2, out2 = g4, out3 = g1, out4 = g3, out5 = g5
-template Fp12CyclotomicDecompress(n, k, p) {
+template<std::size_t n, std::size_t k, std::size_t p> void Fp12CyclotomicDecompress() {
     signal input in[4][2][k];
     signal output out[6][2][k]; 
 
@@ -213,7 +213,7 @@ template Fp12CyclotomicDecompress(n, k, p) {
 
 // everything computed with no carries 
 // If registers of in[] are in [0, B), then registers of out[] have abs val < (18(XI0 + 2)k + 2/B )* B^2 
-template SignedFp12CyclotomicSquareNoCarry(n, k) {
+template<std::size_t n, std::size_t k> void SignedFp12CyclotomicSquareNoCarry() {
     signal input in[4][2][k];
     signal output out[4][2][2*k-1];
 
@@ -265,7 +265,7 @@ template SignedFp12CyclotomicSquareNoCarry(n, k) {
 // assume in[4][2][k] has registers in [0, 2^n) with in[i][j] in [0, p)
 // output is C(g^2) 
 // out[4][2][k] has registers in [0, 2^n) with out[i][j] in [0, p) 
-template Fp12CyclotomicSquare(n, k, p) {
+template<std::size_t n, std::size_t k, std::size_t p> void Fp12CyclotomicSquare() {
     signal input in[4][2][k]; 
     signal output out[4][2][k];
 
@@ -295,7 +295,7 @@ template Fp12CyclotomicSquare(n, k, p) {
 // output is input raised to the e-th power
 // use the square and multiply method
 // assume 0 < e < 2^254
-template Fp12CyclotomicExp(n, k, e, p) {
+template<std::size_t n, std::size_t k, std::size_t e, std::size_t p> void Fp12CyclotomicExp() {
     assert( e > 0 );
 
     signal input in[6][2][k];
@@ -378,11 +378,11 @@ template Fp12CyclotomicExp(n, k, e, p) {
 
 // hard part of final exponentiation
 // use equation at top of p.14 from https://eprint.iacr.org/2020/875.pdf
-template FinalExpHardPart(n, k, p){
+template<std::size_t n, std::size_t k, std::size_t p> void FinalExpHardPart(){
     signal input in[6][2][k]; 
     signal output out[6][2][k];
 
-    std::size_t x = get_BLS12_381_parameter();  // absolute value of parameter for BLS12-381
+    std::size_t x = BLS12381_PARAMETER;  // absolute value of parameter for BLS12-381
     
     // in^{(x+1)/3} 
     component pow1 = Fp12CyclotomicExp(n, k, (x+1)\3, p); 
@@ -464,7 +464,7 @@ template FinalExpHardPart(n, k, p){
 
 // easy part of final exponentiation 
 // out = in^{ (q^6 - 1)*(q^2 + 1) }
-template FinalExpEasyPart(n, k, p){
+template<std::size_t n, std::size_t k, std::size_t p> void FinalExpEasyPart(){
     signal input in[6][2][k];
     signal output out[6][2][k];
     
@@ -502,7 +502,7 @@ template FinalExpEasyPart(n, k, p){
 }
 
 // out = in^{(q^12-1)/r} = FinalExpHardPart( FinalExpEasyPart(in) )
-template FinalExponentiate(n, k, p){
+template<std::size_t n, std::size_t k, std::size_t p> void FinalExponentiate(){
     signal input in[6][2][k];
     signal output out[6][2][k];
 

@@ -13,7 +13,7 @@ include "./bls12_381_func.circom";
 // in[i] = (x_i, y_i) 
 // Implements constraint: (y_1 + y_3) * (x_2 - x_1) - (y_2 - y_1)*(x_1 - x_3) = 0 mod p
 // used to show (x1, y1), (x2, y2), (x3, -y3) are co-linear
-template PointOnLineFp2(n, k, p) {
+template<std::size_t n, std::size_t k, std::size_t p> void PointOnLineFp2() {
     signal input in[3][2][2][k]; 
 
     std::size_t LOGK = log_ceil(k);
@@ -58,7 +58,7 @@ template PointOnLineFp2(n, k, p) {
 // Implements:
 // x^3 + ax + b - y^2 = 0 mod p
 // Assume: a, b in [0, 2^n). a, b are complex 
-template PointOnCurveFp2(n, k, a, b, p){
+template<std::size_t n, std::size_t k, std::size_t a, std::size_t b, std::size_t p> void PointOnCurveFp2(){
     signal input in[2][2][k]; 
 
     std::size_t LOGK = log_ceil(k);
@@ -132,7 +132,7 @@ template PointOnCurveFp2(n, k, a, b, p){
 // Implements:
 // out = x^3 + ax + b mod p
 // Assume: a, b are in Fp2, coefficients in [0, 2^n)
-template EllipticCurveFunction(n, k, a, b, p){
+template<std::size_t n, std::size_t k, std::size_t a, std::size_t b, std::size_t p> void EllipticCurveFunction(){
     signal input in[2][k]; 
     signal output out[2][k];
 
@@ -199,7 +199,7 @@ template EllipticCurveFunction(n, k, a, b, p){
 // where lambda = (3 x_1^2 + a)/(2 y_1) 
 // Actual constraint is 2y_1 (y_1 + y_3) = (3 x_1^2 + a ) ( x_1 - x_3 )
 // a is complex 
-template PointOnTangentFp2(n, k, a, p){
+template<std::size_t n, std::size_t k, std::size_t a, std::size_t p> void PointOnTangentFp2(){
     signal input in[2][2][2][k];
     
     std::size_t LOGK = log_ceil(k);
@@ -274,7 +274,7 @@ template PointOnTangentFp2(n, k, a, p){
 // these equations are equivalent to:
 //  (x_1 + x_2 + x_3)*(x_2 - x_1)^2 = (y_2 - y_1)^2 mod p
 //  (y_1 + y_3)*(x_2 - x_1) = (y_2 - y_1)*(x_1 - x_3) mod p
-template EllipticCurveAddUnequalFp2(n, k, p) { 
+template<std::size_t n, std::size_t k, std::size_t p> void EllipticCurveAddUnequalFp2() {
     signal input a[2][2][k];
     signal input b[2][2][k];
 
@@ -388,7 +388,7 @@ template EllipticCurveAddUnequalFp2(n, k, p) {
 // * (x_3, y_3) is a valid point on the curve 
 // * the slope (y_3 - y_1)/(x_3 - x_1) equals 
 // * x_1 != x_3 
-template EllipticCurveDoubleFp2(n, k, a, b, p) {
+template<std::size_t n, std::size_t k, std::size_t a, std::size_t b, std::size_t p> void EllipticCurveDoubleFp2() {
     signal input in[2][2][k];
     signal output out[2][2][k];
 
@@ -455,7 +455,7 @@ template EllipticCurveDoubleFp2(n, k, a, b, p) {
 // Assume curve has no Fp2 points of order 2, i.e., x^3 + a2*x + b2 has no Fp2 roots
 // Fact: ^ this is the case for BLS12-381 twisted E2 and its 3-isogeny E2'
 // If isInfinity = 1, replace `out` with `a` so if `a` was on curve, so is output
-template EllipticCurveAddFp2(n, k, a2, b2, p){
+template<std::size_t n, std::size_t k, std::size_t a2, std::size_t b2, std::size_t p> void EllipticCurveAddFp2(){
     signal input a[2][2][k];
     signal input aIsInfinity;
     signal input b[2][2][k];
@@ -532,7 +532,7 @@ template EllipticCurveAddFp2(n, k, a2, b2, p){
 //  x in [0, 2^250) 
 //  `in` is point in E2 even if inIsInfinity = 1 just so nothing goes wrong
 //  E2(Fp2) has no points of order 2
-template EllipticCurveScalarMultiplyFp2(n, k, b, x, p){
+template<std::size_t n, std::size_t k, std::size_t b, std::size_t x, std::size_t p> void EllipticCurveScalarMultiplyFp2(){
     signal input in[2][2][k];
     signal input inIsInfinity;
 
@@ -613,7 +613,7 @@ template EllipticCurveScalarMultiplyFp2(n, k, b, x, p){
 //  E2 has no Fp2 points of order 2 
 //  x in [0, 2^250) 
 //  P has order > x, so in double-and-add loop we never hit point at infinity, and only add unequal is allowed: constraint will fail if add unequal fails 
-template EllipticCurveScalarMultiplyUnequalFp2(n, k, b, x, p){
+template<std::size_t n, std::size_t k, std::size_t b, std::size_t x, std::size_t p> void EllipticCurveScalarMultiplyUnequalFp2(){
     signal input in[2][2][k];
     signal output out[2][2][k];
 

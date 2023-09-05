@@ -6,7 +6,7 @@ include "bigint_func.cpp";
 // a[i], b[i] in 0... 2**n-1
 // represent a = a[0] + a[1] * 2**n + .. + a[k - 1] * 2**(n * k)
 // calculates (a+b)%p, where 0<= a,b < p 
-template FpAdd(n, k, p){
+template<std::size_t n, std::size_t k, std::size_t p> void FpAdd(){
     assert(n <= 252);
     signal input a[k];
     signal input b[k];
@@ -41,7 +41,7 @@ template FpAdd(n, k, p){
 
 // calculates (a - b) % p, where a, b < p
 // note: does not assume a >= b
-template FpSubtract(n, k, p){
+template<std::size_t n, std::size_t k, std::size_t p> void FpSubtract(){
     assert(n <= 252);
     signal input a[k];
     signal input b[k];
@@ -68,7 +68,7 @@ template FpSubtract(n, k, p){
 // Input: in <= p
 // Output: -in (mod p) = p - in if in != 0, else 0 
 // Constrains in <= p
-template FpNegate(n, k, p){
+template<std::size_t n, std::size_t k, std::size_t p> void FpNegate(){
     signal input in[k];
     signal output out[k];
 
@@ -85,7 +85,7 @@ template FpNegate(n, k, p){
         out[idx] <== (1-is_zero.out)*neg.out[idx];
 }
 
-template FpMultiply(n, k, p) {
+template<std::size_t n, std::size_t k, std::size_t p> void FpMultiply() {
     assert(n <= 252);
     signal input a[k];
     signal input b[k];
@@ -114,7 +114,7 @@ template FpMultiply(n, k, p) {
 // in[i] in (-2^overflow, 2^overflow) 
 // assume registers of X have abs value < 2^{overflow - n - log(min(k,m)) - 1} 
 // assume overflow - 1 >= n 
-template CheckCarryModP(n, k, m, overflow, p){
+template<std::size_t n, std::size_t k, std::size_t m, std::size_t overflow, std::size_t p> void CheckCarryModP(){
     signal input in[k]; 
     signal input X[m];
     signal input Y[k];
@@ -146,7 +146,7 @@ template CheckCarryModP(n, k, m, overflow, p){
 // X has at most Ceil( overflow / n ) registers 
 
 // out has registers in [0, 2^n) but don't constrain out < p
-template SignedFpCarryModP(n, k, overflow, p){
+template<std::size_t n, std::size_t k, std::size_t overflow, std::size_t p> void SignedFpCarryModP(){
     assert(k < 50);
     signal input in[k]; 
     std::size_t m = (overflow + n - 1) \ n;
@@ -193,7 +193,7 @@ template SignedFpCarryModP(n, k, overflow, p){
 // X has at most Ceil( overflow / n ) registers 
 
 // save range check on Y compared to SignedFpCarryModP
-template SignedCheckCarryModToZero(n, k, overflow, p){
+template<std::size_t n, std::size_t k, std::size_t overflow, std::size_t p> void SignedCheckCarryModToZero(){
     assert(k < 50);
     signal input in[k]; 
     std::size_t m = (overflow + n - 1) \ n;
@@ -226,7 +226,7 @@ template SignedCheckCarryModToZero(n, k, overflow, p){
 // return in % 2
 // This requires `in` to be the unique element < p. 
 // NOTE: different from Wahby-Boneh paper https://eprint.iacr.org/2019/403.pdf and python reference code: https://github.com/algorand/bls_sigs_ref/blob/master/python-impl/opt_swu_g2.py
-template FpSgn0(n, k, p){
+template<std::size_t n, std::size_t k, std::size_t p> void FpSgn0(){
     signal input in[k];
     signal output out;
 
@@ -248,7 +248,7 @@ template FpSgn0(n, k, p){
     in[0] === 2 * div + out;
 }
 
-template FpIsZero(n, k, p){
+template<std::size_t n, std::size_t k, std::size_t p> void FpIsZero(){
     signal input in[k];
     signal output out;
 
@@ -265,7 +265,7 @@ template FpIsZero(n, k, p){
     out <== isZero.out;
 }
 
-template FpIsEqual(n, k, p){
+template<std::size_t n, std::size_t k, std::size_t p> void FpIsEqual(){
     signal input in[2][k];
     signal output out;
 

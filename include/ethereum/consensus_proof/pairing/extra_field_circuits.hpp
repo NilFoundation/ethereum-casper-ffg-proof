@@ -12,7 +12,7 @@ include "fp12.circom";
 // a, b are elements of Fp^l
 // a[i] represents a[i][0] + a[i][1] * 2**n + ... + a[i][l-1] * 2**(n*(k-1))
 // compute a+b in Fp^l
-template FieldAdd2D(n, k, l) {
+template<std::size_t n, std::size_t k, std::size_t l> void FieldAdd2D() {
     signal input a[l][k];
     signal input b[l][k];
     signal input p[k];
@@ -35,7 +35,7 @@ template FieldAdd2D(n, k, l) {
 // take a polynomial expression a[0] + omega^1 a[1] + ... + omega^(2l-2) a[2l-2]
 // reduce it to degree l-1 using omega^l + omega^(l-1) poly[l-1] + ... + poly[0] = 0
 // WARNING: can produce incorrectly handled negative coefficients. only here for reference; do not use
-template PolynomialReduce(l) {
+template<std::size_t l> void PolynomialReduce() {
     signal input a[2*l-1];
     signal input poly[l];
     signal output out[l];
@@ -76,7 +76,7 @@ template PolynomialReduce(l) {
     }
 }
 
-template Fp2PolynomialReduce(n, k, p) {
+template<std::size_t n, std::size_t k, std::size_t p> void Fp2PolynomialReduce() {
     std::size_t l = 2;
     signal input a[2*l-1][k];
     std::size_t poly[2] = [1, 0]; // x^2 + 1 = 0
@@ -105,7 +105,7 @@ template Fp2PolynomialReduce(n, k, p) {
 // A similar circuit can do multiplication in different fields. 
 // The only difference is that Fp2PolynomialReduce (which reduces quadratics by x^2+1) 
 // must be replaced with a different circuit specialized to the minimal polynomial
-template Fp2Multiply1(n, k, p) {
+template<std::size_t n, std::size_t k, std::size_t p> void Fp2Multiply1() {
     // l is always 2. poly is always [1, 0]
     std::size_t l = 2;
     signal input a[l][k];
@@ -153,7 +153,7 @@ template Fp2Multiply1(n, k, p) {
 // squaring can be optimized to save 2 multiplication
 // (a**2-b**2) = (a+b)(a-b) 
 // (a+b u)**2 = (a+b)(a-b) + (a*b+a*b)u
-template Fp2Square(n, k){
+template<std::size_t n, std::size_t k> void Fp2Square(){
     signal input in[2][k];
     signal input p[k];
     signal output out[2][k];
@@ -246,7 +246,7 @@ function Fp2prod(n, k, a, b, p){
 // out[0], out[1] have 2*k-1 registers 
 // out[0][i] in (-(k+1)*2^{2n}, (k+1)*2^{2n+1})
 // out[1][i] in [0, (k+1)*2^{2n+1}) 
-template Fp2multiplyNoCarry(n, k){
+template<std::size_t n, std::size_t k> void Fp2multiplyNoCarry(){
     signal input a[2][k];
     signal input b[2][k];
     signal input p[k];
@@ -283,7 +283,7 @@ template Fp2multiplyNoCarry(n, k){
 
 // multiplication specialized to Fp^2 
 // (a0 + a1 u)*(b0 + b1 u) = (a0*b0 - a1*b1) + (a0*b1 + a1*b0)u
-template Fp2multiply(n, k){
+template<std::size_t n, std::size_t k> void Fp2multiply(){
     signal input a[2][k];
     signal input b[2][k];
     signal input p[k];
@@ -424,7 +424,7 @@ function prod3D(n, k, l, a, b, c) {
 // we first write a = A + B u, b = C + D u, c = E + F u and compute 
 // abc = (ACE - BDE - ADF - BCF) + (ADE + BCE + ACF - BCF) u, and then simplify the representation
 // assumes n, k are chosen so that cubic carries are OK
-template Fp12MultiplyThree(n, k, p) {
+template<std::size_t n, std::size_t k, std::size_t p> void Fp12MultiplyThree() {
     std::size_t l = 6;
     signal input a[l][2][k];
     signal input b[l][2][k];
